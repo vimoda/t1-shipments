@@ -3,7 +3,7 @@ from __future__ import annotations
 import typer
 
 from . import auth_cmd, mcp_cmd, track_detail_cmd, track_state_cmd
-from . import balance_cmd, carriers_cmd, pickup_cmd, quote_cmd, shipment_cmd
+from . import balance_cmd, carriers_cmd, label_cmd, pickup_cmd, quote_cmd, shipment_cmd
 
 app = typer.Typer(
     name="t1",
@@ -20,6 +20,7 @@ app.command("balance")(balance_cmd.run)
 app.command("pickup")(pickup_cmd.run)
 app.command("carriers")(carriers_cmd.run)
 app.command("create-shipment")(shipment_cmd.run)
+app.command("label")(label_cmd.run)
 
 
 if __name__ == "__main__":

@@ -1,14 +1,27 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+ENV_PRESETS: dict[str, dict[str, str]] = {
+    "dev": {
+        "base_url": "https://apiv2.dev.t1envios.com",
+        "auth_base_url": "https://keycloak.dev.plataformat1.com",
+    },
+    "prod": {
+        "base_url": "https://apiv2.t1envios.com",
+        "auth_base_url": "https://keycloak.plataformat1.com",
+    },
+}
 
 
 class Endpoints(BaseModel):
     """API endpoint paths. Override per-path or change base_url entirely."""
 
-    base_url: str = "https://apiv2.dev.t1envios.com"
-    auth_base_url: str = "https://keycloak.dev.plataformat1.com"
+    base_url: str = ENV_PRESETS["dev"]["base_url"]
+    auth_base_url: str = ENV_PRESETS["dev"]["auth_base_url"]
     auth: str = "/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token"
     refresh: str = "/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token" # Sugerido por IA: /auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token
     quote: str = "/quote/create-with-quote" # Sugerido por IA: /shipments/quote
@@ -58,11 +71,21 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="T1_", env_file=".env", extra="ignore")
 
     client_id: str
-    client_secret: str
+    client_secret: SecretStr
     username: str | None = None
     password: SecretStr | None = None
-    base_url: str = "https://api.t1envios.com"
-    auth_url: str = "https://keycloak.dev.plataformat1.com"
+    env: Literal["dev", "prod"] = "dev"
+    base_url: str | None = None       # overrides preset when set
+    auth_url: str | None = None       # overrides preset when set
     shop_id: str | None = None
     commerce_id: str | None = None
     timeout: float = 30.0
+    retries: int = 3
+    log_level: str | None = None
+
+    def endpoints(self) -> "Endpoints":
+        preset = ENV_PRESETS[self.env]
+        return Endpoints(
+            base_url=self.base_url or preset["base_url"],
+            auth_base_url=self.auth_url or preset["auth_base_url"],
+        )

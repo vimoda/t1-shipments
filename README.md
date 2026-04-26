@@ -49,7 +49,7 @@ t1 auth status     # Show current token status
 t1 quote \
   --from-zip 02719 --to-zip 40900 \
   --weight 1 --width 10 --height 10 --length 10 \
-  --value 500 --qty 1
+  --package-value 500 --packages 1
 ```
 
 ### Create shipment

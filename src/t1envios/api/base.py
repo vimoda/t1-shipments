@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import time
 from typing import TYPE_CHECKING, Any
 
 import httpx
@@ -10,14 +12,27 @@ if TYPE_CHECKING:
     from ..auth.authenticator import Authenticator
     from ..config import Endpoints
 
+log = logging.getLogger("t1envios.api")
+
 
 class BaseResource:
-    def __init__(self, http: httpx.Client, auth: "Authenticator", endpoints: "Endpoints", shop_id: str | None = None, commerce_id: str | None = None) -> None:
+    def __init__(
+        self,
+        http: httpx.Client,
+        auth: "Authenticator",
+        endpoints: "Endpoints",
+        shop_id: str | None = None,
+        commerce_id: str | None = None,
+        retries: int = 3,
+        retry_delay: float = 1.0,
+    ) -> None:
         self._http = http
         self._auth = auth
         self._endpoints = endpoints
         self._shop_id = shop_id
         self._commerce_id = commerce_id
+        self._retries = retries
+        self._retry_delay = retry_delay
 
     def request(
         self,
@@ -27,38 +42,46 @@ class BaseResource:
         retry_on_401: bool = True,
         **kwargs: Any,
     ) -> Any:
-        token = self._auth.ensure_valid()
-        
         headers = kwargs.pop("headers", {})
-        headers["Authorization"] = f"Bearer {token.access_token}"
-        if self._shop_id:
-            headers["shop_id"] = self._shop_id
-        
-        req = self._http.build_request(method, url, headers=headers, **kwargs)
-        self._print_curl(req)
-        resp = self._http.send(req)
-        
-        if resp.status_code == 401 and retry_on_401:
-            token = self._auth.refresh()
-            headers["Authorization"] = f"Bearer {token.access_token}"
-            req = self._http.build_request(method, url, headers=headers, **kwargs)
-            self._print_curl(req)
-            resp = self._http.send(req)
 
-        self._raise_for_status(resp)
-        if resp.content:
-            return resp.json()
-        return None
+        for attempt in range(max(self._retries, 1)):
+            try:
+                token = self._auth.ensure_valid()
+                headers["Authorization"] = f"Bearer {token.access_token}"
+                if self._shop_id:
+                    headers["shop_id"] = self._shop_id
 
-    @staticmethod
-    def _print_curl(req: httpx.Request) -> None:
-        parts = [f"-X {req.method} '{req.url}'"]
-        for name, value in req.headers.items():
-            parts.append(f"-H '{name}: {value}'")
-        body = req.content
-        if body:
-            parts.append(f"--data-raw '{body.decode()}'")
-        print("curl " + " \\\n  ".join(parts))
+                log.debug("%s %s", method, url)
+                req = self._http.build_request(method, url, headers=headers, **kwargs)
+                resp = self._http.send(req)
+                log.debug("→ %s", resp.status_code)
+
+                if resp.status_code == 401 and retry_on_401:
+                    log.warning("401 received, refreshing token and retrying")
+                    token = self._auth.refresh()
+                    headers["Authorization"] = f"Bearer {token.access_token}"
+                    req = self._http.build_request(method, url, headers=headers, **kwargs)
+                    resp = self._http.send(req)
+                    log.debug("→ %s (after token refresh)", resp.status_code)
+
+                if 500 <= resp.status_code < 600 and attempt < self._retries - 1:
+                    delay = self._retry_delay * (2**attempt)
+                    log.warning("5xx (%s) on attempt %d, retrying in %.1fs", resp.status_code, attempt + 1, delay)
+                    time.sleep(delay)
+                    continue
+
+                self._raise_for_status(resp)
+                return resp.json() if resp.content else None
+
+            except (httpx.TimeoutException, httpx.ConnectError) as exc:
+                if attempt < self._retries - 1:
+                    delay = self._retry_delay * (2**attempt)
+                    log.warning("%s on attempt %d, retrying in %.1fs", type(exc).__name__, attempt + 1, delay)
+                    time.sleep(delay)
+                else:
+                    raise
+
+        raise RuntimeError("retry loop exhausted without returning")  # unreachable
 
     def _raise_for_status(self, resp: httpx.Response) -> None:
         if resp.status_code < 400:

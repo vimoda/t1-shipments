@@ -11,10 +11,12 @@ dependencies = [
     "pydantic-settings>=2.14.0",
     "keyring>=25.7.0",
     "rich>=15.0.0",
-    "mcp>=1.27.0",
 ]
 
 [project.optional-dependencies]
+mcp = [
+    "mcp>=1.27.0",
+]
 dev = [
     "pytest>=8",
     "pytest-httpx>=0.30",

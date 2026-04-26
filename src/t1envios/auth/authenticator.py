@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING
 
@@ -11,6 +12,8 @@ from .token import Token
 
 if TYPE_CHECKING:
     from ..config import Endpoints
+
+log = logging.getLogger("t1envios.auth")
 
 
 class Authenticator:
@@ -49,6 +52,7 @@ class Authenticator:
                 "client_secret": self._client_secret,
             }
 
+        log.debug("Logging in (grant_type=%s)", payload.get("grant_type"))
         resp = self._http.post(
             self._endpoints.auth_url(self._endpoints.auth),
             data=payload,
@@ -61,12 +65,15 @@ class Authenticator:
         token = self._parse_token(data)
         self._token = token
         self._storage.save(token)
+        log.debug("Login successful, token expires at %s", token.expires_at)
         return token
 
     def refresh(self) -> Token:
         if not self._token or not self._token.refresh_token:
+            log.debug("No refresh token available, re-logging in")
             return self.login()
 
+        log.debug("Refreshing token")
         resp = self._http.post(
             self._endpoints.auth_url(self._endpoints.auth),
             data={

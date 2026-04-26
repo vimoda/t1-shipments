@@ -1165,7 +1165,6 @@ source = { editable = "." }
 dependencies = [
     { name = "httpx" },
     { name = "keyring" },
-    { name = "mcp" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "rich" },
@@ -1180,12 +1179,15 @@ dev = [
     { name = "pytest-httpx" },
     { name = "ruff" },
 ]
+mcp = [
+    { name = "mcp" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "keyring", specifier = ">=25.7.0" },
-    { name = "mcp", specifier = ">=1.27.0" },
+    { name = "mcp", marker = "extra == 'mcp'", specifier = ">=1.27.0" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "pydantic", specifier = ">=2.13.3" },
     { name = "pydantic-settings", specifier = ">=2.14.0" },
@@ -1196,7 +1198,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "typer", specifier = ">=0.24.2" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["mcp", "dev"]
 
 [[package]]
 name = "tomli"

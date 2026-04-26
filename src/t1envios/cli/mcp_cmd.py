@@ -53,5 +53,9 @@ def install() -> None:
 @app.command("run")
 def run_server() -> None:
     """Start the MCP server (stdio mode)."""
-    from ..mcp_server.server import main
+    try:
+        from ..mcp_server.server import main
+    except ImportError:
+        rprint("[red]Error:[/red] MCP extra not installed. Run: pip install t1envios[mcp]")
+        raise typer.Exit(1)
     main()

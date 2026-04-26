@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from turtle import st
 from types import TracebackType
 from typing import Any
 
@@ -16,6 +15,7 @@ from .api.tracking import TrackingResource
 from .auth.authenticator import Authenticator
 from .auth.storage import HybridStorage, TokenStorage
 from .config import Endpoints
+from .utils.logging import configure_logging
 from .models.quote import QuoteRequest, QuoteResponse
 from .models.shipment import Shipment, ShipmentRequest
 from .models.tracking import Balance, Carrier, Pickup, PickupRequest, TrackingResponse, TrackingState
@@ -35,8 +35,12 @@ class T1Client:
         token_storage: TokenStorage | None = None,
         http_client: httpx.Client | None = None,
         shop_id: str | None = None,
-        commerce_id: str | None = None
+        commerce_id: str | None = None,
+        log_level: str | None = None,
+        retries: int = 3,
     ) -> None:
+        if log_level is not None:
+            configure_logging(log_level)
         self._endpoints = endpoints or Endpoints()
         self._http = http_client or httpx.Client(timeout=timeout)
         _storage = token_storage if token_storage is not None else HybridStorage()
@@ -49,12 +53,13 @@ class T1Client:
             password=password,
             storage=_storage,
         )
-        self._quotes = QuotesResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id)
-        self._tracking = TrackingResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id)
-        self._balance = BalanceResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id)
-        self._pickups = PickupsResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id)
-        self._carriers = CarriersResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id)
-        self._shipments = ShipmentsResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id)
+        _res_kwargs = dict(shop_id=shop_id, commerce_id=commerce_id, retries=retries)
+        self._quotes = QuotesResource(self._http, self._auth, self._endpoints, **_res_kwargs)
+        self._tracking = TrackingResource(self._http, self._auth, self._endpoints, **_res_kwargs)
+        self._balance = BalanceResource(self._http, self._auth, self._endpoints, **_res_kwargs)
+        self._pickups = PickupsResource(self._http, self._auth, self._endpoints, **_res_kwargs)
+        self._carriers = CarriersResource(self._http, self._auth, self._endpoints, **_res_kwargs)
+        self._shipments = ShipmentsResource(self._http, self._auth, self._endpoints, **_res_kwargs)
 
     def login(self) -> None:
         self._auth.login()
@@ -83,6 +88,9 @@ class T1Client:
     def create_shipment(self, req: ShipmentRequest) -> Shipment:
         return self._shipments.create_shipment(req)
 
+    def download_label(self, guide_link: str) -> bytes:
+        return self._shipments.download_label(guide_link)
+
     def close(self) -> None:
         self._http.close()
 
@@ -103,12 +111,14 @@ class T1Client:
         s = Settings()  # type: ignore[call-arg]
         return cls(
             client_id=s.client_id,
-            client_secret=s.client_secret,
+            client_secret=s.client_secret.get_secret_value(),
             username=s.username,
             password=s.password.get_secret_value() if s.password else None,
-            endpoints=Endpoints(base_url=s.base_url),
+            endpoints=s.endpoints(),
             timeout=s.timeout,
             shop_id=s.shop_id,
             commerce_id=s.commerce_id,
+            retries=s.retries,
+            log_level=s.log_level,
             **kwargs,
         )

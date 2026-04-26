@@ -8,9 +8,6 @@ class TrackingResource(BaseResource):
     def track_state(self, guide: str) -> TrackingState:
         url = self._endpoints.url(self._endpoints.track_state, guide=guide)
         data = self.request("GET", url)
-        
-        print("Raw response data:", data)  # Debugging line
-        print("Type of response data:", type(data))  # Debugging line
 
         if not isinstance(data, dict):
             raise ValueError(f"Expected dict response, got {type(data)}")
@@ -36,10 +33,6 @@ class TrackingResource(BaseResource):
     def track_detail(self, guide: str) -> TrackingResponse:
         url = self._endpoints.url(self._endpoints.track_detail, guide=guide)
         data = self.request("GET", url)
-        
-        print("Raw response data:", data)  # Debugging line
-        print("Type of response data:", type(data))  # Debugging line
-
 
         if not isinstance(data, dict):
             raise ValueError(f"Expected dict response, got {type(data)}")

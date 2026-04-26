@@ -11,3 +11,5 @@ htmlcov/
 ~/.t1envios/
 .pytest_cache/
 my-cli-commands.md
+.venv
+.vscode

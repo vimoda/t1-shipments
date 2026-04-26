@@ -30,7 +30,7 @@ uv run mypy src/
 uv run t1 --help
 uv run t1 auth login
 uv run t1 balance
-uv run t1 quote --from-zip 02719 --to-zip 40900 --weight 1 --width 10 --height 10 --length 10 --value 500  --qty 1
+uv run t1 quote --from-zip 02719 --to-zip 40900 --weight 1 --width 10 --height 10 --length 10 --package-value 500  --packages 1
 
 uv run t1 create-shipment \
   --quote-id <TOKEN_FROM_QUOTE> \
