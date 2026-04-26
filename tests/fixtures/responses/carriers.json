@@ -1,0 +1,5 @@
+[
+  {"carrier_id": "fedex", "name": "FedEx", "services": ["Express", "Ground"], "active": true},
+  {"carrier_id": "dhl", "name": "DHL", "services": ["Express"], "active": true},
+  {"carrier_id": "estafeta", "name": "Estafeta", "services": ["Terrestre", "Express"], "active": true}
+]

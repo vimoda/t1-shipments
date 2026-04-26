@@ -1,0 +1,8 @@
+{
+  "shipment_id": "shp-001",
+  "guide_number": "1Z999AA10123456784",
+  "label_url": "https://labels.t1envios.com/shp-001.pdf",
+  "carrier": "FedEx",
+  "service": "Express",
+  "status": "created"
+}

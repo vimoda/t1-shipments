@@ -1,0 +1,21 @@
+{
+  "quote_id": "q-123",
+  "rates": [
+    {
+      "rate_id": "r-001",
+      "carrier": "FedEx",
+      "service": "Express",
+      "price": 150.0,
+      "currency": "MXN",
+      "estimated_days": 2
+    },
+    {
+      "rate_id": "r-002",
+      "carrier": "DHL",
+      "service": "Ground",
+      "price": 80.0,
+      "currency": "MXN",
+      "estimated_days": 5
+    }
+  ]
+}

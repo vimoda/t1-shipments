@@ -1,0 +1,19 @@
+{
+  "guide_number": "GUIDE123",
+  "carrier": "FedEx",
+  "current_status": "En tránsito",
+  "events": [
+    {
+      "timestamp": "2024-01-15T10:00:00Z",
+      "status": "Recolectado",
+      "description": "Paquete recolectado en origen",
+      "location": "CDMX"
+    },
+    {
+      "timestamp": "2024-01-16T08:00:00Z",
+      "status": "En tránsito",
+      "description": "En camino a destino",
+      "location": "Guadalajara"
+    }
+  ]
+}
