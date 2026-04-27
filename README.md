@@ -1,5 +1,7 @@
 # t1envios
 
+> **Disclaimer:** This is an unofficial, community-built SDK. It is not affiliated with or endorsed by T1Envios.
+
 Python SDK and CLI for the [T1Envios](https://t1envios.com) API. Quote shipments, generate guides, schedule pickups, and track packages — from code or the terminal.
 
 ## Installation
