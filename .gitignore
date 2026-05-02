@@ -13,3 +13,4 @@ htmlcov/
 my-cli-commands.md
 .venv
 .vscode
+opencode.json
