@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from t1envios.auth.storage import FileStorage, HybridStorage
-from t1envios.auth.token import Token
+from t1envios.core.auth.storage import FileStorage, HybridStorage
+from t1envios.core.auth.token import Token
 
 
 @pytest.fixture
@@ -73,7 +73,7 @@ def test_hybrid_falls_back_to_file(monkeypatch, tmp_path, sample_token):
     monkeypatch.setattr(builtins, "__import__", bad_import)
 
     creds = tmp_path / "credentials.json"
-    from t1envios.auth.storage import FileStorage
+    from t1envios.core.auth.storage import FileStorage
     storage = FileStorage(path=creds)
     storage.save(sample_token)
     loaded = storage.load()

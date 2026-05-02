@@ -5,15 +5,15 @@ from datetime import datetime, timedelta, timezone
 import httpx
 import pytest
 
-from t1envios.auth.authenticator import Authenticator
-from t1envios.auth.token import Token
-from t1envios.config import Endpoints
-from t1envios.exceptions import AuthError
+from t1envios.core.auth.authenticator import Authenticator
+from t1envios.core.auth.token import Token
+from t1envios.core.config import Endpoints
+from t1envios.core.exceptions import AuthError, SessionExpiredError
 
 from conftest import InMemoryStorage, load_fixture
 
 AUTH_URL = "https://api.example.com/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token"
-BALANCE_URL = "https://api.example.com/account/balance"
+BALANCE_URL = "https://api.example.com/balance/consult"
 
 
 @pytest.fixture
@@ -88,9 +88,8 @@ def test_refresh_token(httpx_mock, endpoints):
     assert "refresh_token=old-refresh" in body
 
 
-def test_refresh_falls_back_to_login(httpx_mock, endpoints):
+def test_refresh_raises_session_expired_on_failure(httpx_mock, endpoints):
     httpx_mock.add_response(url=AUTH_URL, status_code=401)
-    httpx_mock.add_response(url=AUTH_URL, json=load_fixture("login"))
     expired = Token(
         access_token="old",
         refresh_token="old-refresh",
@@ -98,8 +97,8 @@ def test_refresh_falls_back_to_login(httpx_mock, endpoints):
     )
     auth = _auth(endpoints, storage=InMemoryStorage(token=expired))
     auth._token = expired
-    token = auth.refresh()
-    assert token.access_token == "test-access-token"
+    with pytest.raises(SessionExpiredError):
+        auth.refresh()
 
 
 def test_ensure_valid_uses_stored_token(endpoints):
@@ -115,9 +114,12 @@ def test_ensure_valid_uses_stored_token(endpoints):
 def test_401_triggers_refresh_then_retry(httpx_mock, endpoints):
     httpx_mock.add_response(url=AUTH_URL, json=load_fixture("login"))
     httpx_mock.add_response(url=BALANCE_URL, status_code=401)
-    httpx_mock.add_response(url=BALANCE_URL, json={"amount": 100.0, "currency": "MXN"})
+    httpx_mock.add_response(
+        url=BALANCE_URL,
+        json={"success": True, "detail": {"monto_actual": 100.0, "currency": "MXN", "credito": False}},
+    )
 
-    from t1envios.api.balance import BalanceResource
+    from t1envios.core.api.balance import BalanceResource
 
     valid = Token(
         access_token="old-valid",

@@ -1,21 +1,24 @@
 {
-  "quote_id": "q-123",
-  "rates": [
+  "success": true,
+  "message": null,
+  "detail": [
     {
-      "rate_id": "r-001",
-      "carrier": "FedEx",
-      "service": "Express",
-      "price": 150.0,
+      "token": "qt-001",
+      "service_id": "FEDEX",
+      "service_name": "FedEx Express",
+      "service_type": "express",
+      "total_cost": 150.0,
       "currency": "MXN",
-      "estimated_days": 2
+      "delivery_days": 2
     },
     {
-      "rate_id": "r-002",
-      "carrier": "DHL",
-      "service": "Ground",
-      "price": 80.0,
+      "token": "qt-002",
+      "service_id": "DHL",
+      "service_name": "DHL Express",
+      "service_type": "express",
+      "total_cost": 120.0,
       "currency": "MXN",
-      "estimated_days": 5
+      "delivery_days": 3
     }
   ]
 }

@@ -7,9 +7,17 @@ Python SDK and CLI for the [T1Envios](https://t1envios.com) API. Quote shipments
 ## Installation
 
 ```bash
+# SDK only
 pip install t1envios
-# or with uv
-uv add t1envios
+
+# With CLI
+pip install "t1envios[cli]"
+
+# With MCP server
+pip install "t1envios[mcp]"
+
+# Everything
+pip install "t1envios[cli,mcp]"
 ```
 
 ## Configuration
@@ -118,19 +126,32 @@ t1 mcp start     # Start MCP server
 
 ## SDK
 
+All public types are importable from the top-level package:
+
 ```python
-from t1envios import T1Client
-from t1envios.models.quote import QuoteRequest
-from t1envios.models.shipment import ShipmentRequest
+from t1envios import (
+    T1Client,
+    QuoteRequest,
+    ShipmentRequest,
+    SessionExpiredError,
+    ApiError,
+)
+```
+
+### Quote and create shipment
+
+```python
+from t1envios import T1Client, QuoteRequest, ShipmentRequest
 
 with T1Client(
     client_id="...",
     client_secret="...",
     shop_id="...",
 ) as client:
+    client.login()
 
-    # Quote
-    rates = client.quote(QuoteRequest(
+    # 1. Quote — always call before create_shipment
+    response = client.quote(QuoteRequest(
         origin_postal_code="02719",
         destination_postal_code="40900",
         weight=1,
@@ -139,12 +160,14 @@ with T1Client(
         packages=1,
         shipping_days=2,
         insurance=False,
-        package_type=2,
+        package_type=2,  # 1=Sobre, 2=Paquete
     ))
+    # response.detail is a list of rate dicts; pick one by token
+    quote_token = response.detail[0]["token"]
 
-    # Create shipment
+    # 2. Create shipment
     shipment = client.create_shipment(ShipmentRequest(
-        quote_token=rates.quote_token,
+        quote_token=quote_token,
         content="Ropa",
         origin_first_name="Juan",
         origin_last_name="Pérez",
@@ -172,23 +195,104 @@ with T1Client(
     ))
     print(shipment.tracking_number)
 
-    # Track
-    state = client.track_state("1373188795")
-    print(state.current_status, state.estimated_delivery_date)
-
-    # Balance
-    balance = client.balance()
-    print(balance.amount)
+    # 3. Download label PDF
+    pdf = client.download_label(shipment.label_url)
+    with open("label.pdf", "wb") as f:
+        f.write(pdf)
 ```
 
-### Custom storage
-
-Token storage defaults to `keyring`, falling back to `~/.t1envios/credentials.json`. Override with any `TokenStorage` implementation:
+### Track a package
 
 ```python
-from t1envios.auth.storage import InMemoryStorage
+from t1envios import T1Client
 
+with T1Client(client_id="...", client_secret="...") as client:
+    client.login()
+
+    state = client.track_state("1373188795")
+    print(state.current_status)
+    for event in state.history:
+        print(event.date, event.description)
+
+    detail = client.track_detail("1373188795")
+    print(detail.detail)
+```
+
+### Balance and carriers
+
+```python
+from t1envios import T1Client
+
+with T1Client(client_id="...", client_secret="...") as client:
+    client.login()
+
+    balance = client.balance()
+    print(f"Balance: {balance.amount} {balance.currency}")
+
+    carriers = client.list_carriers()
+    for c in carriers:
+        print(c.name, c.services)
+```
+
+### Exception handling
+
+```python
+from t1envios import T1Client, SessionExpiredError, ApiError, InsufficientBalanceError
+
+with T1Client(client_id="...", client_secret="...") as client:
+    try:
+        client.login()
+        balance = client.balance()
+    except SessionExpiredError:
+        # Token expired and refresh failed — re-login required
+        client.login()
+    except InsufficientBalanceError:
+        print("Not enough balance to create shipment")
+    except ApiError as e:
+        print(f"API error {e.status}: {e}")
+```
+
+Exception hierarchy:
+
+```
+T1Error
+├── AuthError
+│   ├── SessionExpiredError   # no valid session / refresh failed
+│   └── RefreshExpiredError   # refresh token itself expired
+├── ApiError                  # non-2xx HTTP response
+├── RateLimitError            # HTTP 429
+├── StorageError              # token storage backend unavailable
+├── ConfigError               # missing or invalid configuration
+├── QuotaExceededError        # account quota exceeded
+├── InvalidAddressError       # address validation failed
+├── CarrierUnavailableError   # carrier or service not available
+└── InsufficientBalanceError  # account balance too low
+```
+
+### Token storage
+
+By default `T1Client` uses in-memory storage (token is lost when the process exits). For persistent sessions use `HybridStorage`, which tries `keyring` first and falls back to `~/.t1envios/credentials.json`:
+
+```python
+from t1envios import T1Client
+from t1envios.core.auth.storage import HybridStorage, InMemoryStorage
+
+# Persistent (default for CLI)
+client = T1Client(..., token_storage=HybridStorage())
+
+# In-memory — useful for scripts, serverless, or tests
 client = T1Client(..., token_storage=InMemoryStorage())
+```
+
+### Load config from environment
+
+```python
+from t1envios import T1Client
+
+# Reads T1_CLIENT_ID, T1_CLIENT_SECRET, T1_SHOP_ID, etc. from env / .env
+with T1Client.from_settings() as client:
+    client.login()
+    print(client.balance())
 ```
 
 ---

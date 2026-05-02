@@ -1,6 +1,13 @@
 {
-  "pickup_id": "pck-001",
-  "status": "scheduled",
-  "pickup_date": "2024-01-20",
-  "confirmation": "CONF-ABC123"
+  "success": true,
+  "message": null,
+  "detail": {
+    "recoleccion": {
+      "pick_up": "pck-001",
+      "location": "CDMX",
+      "localizacion": "Zona Norte",
+      "status": "scheduled",
+      "mensaje": "Recolección programada exitosamente"
+    }
+  }
 }

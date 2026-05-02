@@ -37,7 +37,7 @@ def install() -> None:
     config.setdefault("mcpServers", {})
     config["mcpServers"]["t1envios"] = {
         "command": sys.executable,
-        "args": ["-m", "t1envios.mcp_server.server"],
+        "args": ["-m", "t1envios.mcp.server"],
         "env": {
             "T1_CLIENT_ID": "${T1_CLIENT_ID}",
             "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
@@ -45,7 +45,7 @@ def install() -> None:
     }
 
     config_path.write_text(json.dumps(config, indent=2))
-    rprint(f"[green]MCP server registered.[/green]")
+    rprint("[green]MCP server registered.[/green]")
     rprint(f"Config: {config_path}")
     rprint("Restart Claude Desktop to apply changes.")
 
@@ -54,7 +54,7 @@ def install() -> None:
 def run_server() -> None:
     """Start the MCP server (stdio mode)."""
     try:
-        from ..mcp_server.server import main
+        from ..mcp.server import main
     except ImportError:
         rprint("[red]Error:[/red] MCP extra not installed. Run: pip install t1envios[mcp]")
         raise typer.Exit(1)

@@ -1,4 +1,6 @@
-from .core.exceptions import (
+from .client import T1Client
+from .config import Endpoints, Settings
+from .exceptions import (
     ApiError,
     AuthError,
     CarrierUnavailableError,
@@ -14,6 +16,9 @@ from .core.exceptions import (
 )
 
 __all__ = [
+    "T1Client",
+    "Endpoints",
+    "Settings",
     "T1Error",
     "AuthError",
     "SessionExpiredError",

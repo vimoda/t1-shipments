@@ -1,17 +1,41 @@
 from __future__ import annotations
 
-from t1envios.models.tracking import PickupRequest
+from t1envios.core.models.tracking import PickupRequest
 
 from conftest import load_fixture
 
 
+def _req() -> PickupRequest:
+    return PickupRequest(
+        carrier="DHL",
+        contact_first_name="Juan",
+        contact_last_name="Pérez",
+        email="juan@example.com",
+        street="Av. Insurgentes",
+        number="100",
+        neighborhood="Centro",
+        phone="5512345678",
+        state="Ciudad de Mexico",
+        municipality="Cuauhtémoc",
+        postal_code="06600",
+        references="Frente al banco",
+        pieces=1,
+        weight=2,
+        length=30,
+        width=20,
+        height=15,
+        date="2024-01-20",
+        open_time="09:00",
+        close_time="18:00",
+    )
+
+
 def test_schedule_pickup_success(httpx_mock, client):
     httpx_mock.add_response(
-        url="https://api.example.com/shipments/pickup",
+        url="https://api.example.com/pickup/create",
         json=load_fixture("pickup"),
     )
-    req = PickupRequest(pickup_date="2024-01-20", packages=2)
-    pickup = client.schedule_pickup(req)
+    pickup = client.schedule_pickup(_req())
     assert pickup.pickup_id == "pck-001"
     assert pickup.status == "scheduled"
-    assert pickup.confirmation == "CONF-ABC123"
+    assert pickup.message == "Recolección programada exitosamente"

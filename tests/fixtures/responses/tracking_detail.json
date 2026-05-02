@@ -1,0 +1,20 @@
+{
+  "success": true,
+  "detail": [
+    {
+      "id": "ev-001",
+      "codigo": "CR",
+      "descripcion": "Recolectado",
+      "familia_interna": "Recoleccion",
+      "familia_generica": "Recoleccion",
+      "guia": "GUIDE123",
+      "fecha_estimada": "2024-01-20",
+      "fecha": "2024-01-15",
+      "hora": "10:00",
+      "id_mensajeria": 1,
+      "nombre_mensajeria": "DHL",
+      "tracking_link": "https://track.dhl.com/GUIDE123",
+      "zona_horaria": "America/Mexico_City"
+    }
+  ]
+}

@@ -1,7 +1,20 @@
-from .client import T1Client
-from .config import Endpoints, Settings
-from .exceptions import ApiError, AuthError, ConfigError, RateLimitError, T1Error
-from .models import (
+from .core.client import T1Client
+from .core.config import Endpoints, Settings
+from .core.exceptions import (
+    ApiError,
+    AuthError,
+    CarrierUnavailableError,
+    ConfigError,
+    InsufficientBalanceError,
+    InvalidAddressError,
+    QuotaExceededError,
+    RateLimitError,
+    RefreshExpiredError,
+    SessionExpiredError,
+    StorageError,
+    T1Error,
+)
+from .core.models import (
     Address,
     Balance,
     Carrier,
@@ -12,6 +25,7 @@ from .models import (
     QuoteResponse,
     Rate,
     Shipment,
+    ShipmentRequest,
     TrackingEvent,
     TrackingResponse,
 )
@@ -22,9 +36,16 @@ __all__ = [
     "Settings",
     "T1Error",
     "AuthError",
+    "SessionExpiredError",
+    "RefreshExpiredError",
     "ApiError",
-    "RateLimitError",
     "ConfigError",
+    "RateLimitError",
+    "StorageError",
+    "QuotaExceededError",
+    "InvalidAddressError",
+    "CarrierUnavailableError",
+    "InsufficientBalanceError",
     "Address",
     "Balance",
     "Carrier",
@@ -35,6 +56,7 @@ __all__ = [
     "QuoteResponse",
     "Rate",
     "Shipment",
+    "ShipmentRequest",
     "TrackingEvent",
     "TrackingResponse",
 ]

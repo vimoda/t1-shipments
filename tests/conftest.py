@@ -7,10 +7,10 @@ from pathlib import Path
 import httpx
 import pytest
 
-from t1envios.auth.storage import TokenStorage
-from t1envios.auth.token import Token
-from t1envios.client import T1Client
-from t1envios.config import Endpoints
+from t1envios.core.auth.storage import TokenStorage
+from t1envios.core.auth.token import Token
+from t1envios.core.client import T1Client
+from t1envios.core.config import Endpoints
 
 FIXTURES = Path(__file__).parent / "fixtures" / "responses"
 

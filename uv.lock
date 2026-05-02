@@ -1164,20 +1164,26 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
-    { name = "keyring" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
-    { name = "rich" },
-    { name = "typer" },
 ]
 
 [package.optional-dependencies]
+cli = [
+    { name = "keyring" },
+    { name = "rich" },
+    { name = "typer" },
+]
 dev = [
+    { name = "keyring" },
+    { name = "mcp" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-httpx" },
+    { name = "rich" },
     { name = "ruff" },
+    { name = "typer" },
 ]
 mcp = [
     { name = "mcp" },
@@ -1186,7 +1192,9 @@ mcp = [
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "keyring", specifier = ">=25.7.0" },
+    { name = "keyring", marker = "extra == 'cli'", specifier = ">=25.7.0" },
+    { name = "keyring", marker = "extra == 'dev'", specifier = ">=25.7.0" },
+    { name = "mcp", marker = "extra == 'dev'", specifier = ">=1.27.0" },
     { name = "mcp", marker = "extra == 'mcp'", specifier = ">=1.27.0" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "pydantic", specifier = ">=2.13.3" },
@@ -1194,11 +1202,13 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "pytest-httpx", marker = "extra == 'dev'", specifier = ">=0.30" },
-    { name = "rich", specifier = ">=15.0.0" },
+    { name = "rich", marker = "extra == 'cli'", specifier = ">=15.0.0" },
+    { name = "rich", marker = "extra == 'dev'", specifier = ">=15.0.0" },
     { name = "ruff", marker = "extra == 'dev'" },
-    { name = "typer", specifier = ">=0.24.2" },
+    { name = "typer", extras = ["all"], marker = "extra == 'cli'", specifier = ">=0.24.2" },
+    { name = "typer", extras = ["all"], marker = "extra == 'dev'", specifier = ">=0.24.2" },
 ]
-provides-extras = ["mcp", "dev"]
+provides-extras = ["cli", "mcp", "dev"]
 
 [[package]]
 name = "tomli"

@@ -1,1 +1,11 @@
-{"amount": 1250.50, "currency": "MXN"}
+{
+  "success": true,
+  "message": null,
+  "detail": {
+    "comercio_id": "SHOP123",
+    "comercio_id_t1paginas": null,
+    "monto_actual": 1250.50,
+    "currency": "MXN",
+    "credito": false
+  }
+}

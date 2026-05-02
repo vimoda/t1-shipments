@@ -1,8 +1,17 @@
 {
-  "shipment_id": "shp-001",
-  "guide_number": "1Z999AA10123456784",
-  "label_url": "https://labels.t1envios.com/shp-001.pdf",
-  "carrier": "FedEx",
-  "service": "Express",
-  "status": "created"
+  "success": true,
+  "message": null,
+  "detail": {
+    "order_number": 12345,
+    "carrier": "DHL",
+    "creation_date": "2024-01-15",
+    "cost": "150.00",
+    "destination": "Guadalajara, JAL",
+    "current_balance": "1100.00",
+    "tracking_number": "1Z999AA10123456784",
+    "extended_zone": false,
+    "packages": 1,
+    "guide_link": "https://labels.t1envios.com/12345.pdf",
+    "file": null
+  }
 }
