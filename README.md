@@ -6,19 +6,49 @@ Python SDK and CLI for the [T1Envios](https://t1envios.com) API. Quote shipments
 
 ## Installation
 
+### Using pip
+
 ```bash
-# SDK only
+# SDK only (httpx, pydantic, pydantic-settings)
 pip install t1envios
 
-# With CLI
+# With CLI (adds typer, rich, keyring)
 pip install "t1envios[cli]"
 
-# With MCP server
+# With MCP server (adds mcp)
 pip install "t1envios[mcp]"
 
 # Everything
 pip install "t1envios[cli,mcp]"
+
+# Development (cli + mcp + pytest, ruff, mypy)
+pip install "t1envios[dev]"
 ```
+
+### Using uv (recommended)
+
+```bash
+# SDK only
+uv add t1envios
+
+# With CLI
+uv add "t1envios[cli]"
+
+# With MCP server
+uv add "t1envios[mcp]"
+
+# Development dependencies
+uv add --extra dev "t1envios[dev]"
+```
+
+### Dependency breakdown
+
+| Extra | Dependencies |
+|-------|-------------|
+| _(none)_ | `httpx>=0.28.1`, `pydantic>=2.13.3`, `pydantic-settings>=2.14.0` |
+| `cli` | _SDK_ + `typer[all]>=0.24.2`, `rich>=15.0.0`, `keyring>=25.7.0` |
+| `mcp` | _SDK_ + `mcp>=1.27.0` |
+| `dev` | _cli_ + _mcp_ + `pytest>=8`, `pytest-httpx>=0.30`, `pytest-cov`, `ruff`, `mypy` |
 
 ## Configuration
 
