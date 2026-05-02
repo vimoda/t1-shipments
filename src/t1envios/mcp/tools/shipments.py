@@ -54,6 +54,7 @@ TOOL_CREATE_SHIPMENT = types.Tool(
     name="create_shipment",
     description=(
         "⚠️ Esta operación tiene costo monetario. "
+        "Si contiene mas de una colonia un codigo postal, se debe solicitar al usuario que diga desde qué colinia mandará su paquete"
         "Create a shipment and generate a shipping guide. "
         "Requires a quote_token obtained from quote_shipment. "
         "Recommended flow: quote_shipment → select rate → create_shipment."

@@ -27,8 +27,6 @@ class T1Client:
         self,
         client_id: str,
         client_secret: str,
-        username: str | None = None,
-        password: str | None = None,
         endpoints: Endpoints | None = None,
         timeout: float = 30.0,
         token_storage: TokenStorage | None = None,
@@ -48,8 +46,6 @@ class T1Client:
             client_secret=client_secret,
             endpoints=self._endpoints,
             http=self._http,
-            username=username,
-            password=password,
             storage=_storage,
         )
         self._quotes = QuotesResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id, retries=retries)
@@ -59,8 +55,8 @@ class T1Client:
         self._carriers = CarriersResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id, retries=retries)
         self._shipments = ShipmentsResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id, retries=retries)
 
-    def login(self) -> None:
-        self._auth.login()
+    def login(self, username: str, password: str) -> None:
+        self._auth.login(username, password)
 
     def logout(self) -> None:
         self._auth.logout()
@@ -112,8 +108,6 @@ class T1Client:
         return cls(
             client_id=s.client_id,
             client_secret=s.client_secret.get_secret_value(),
-            username=s.username,
-            password=s.password.get_secret_value() if s.password else None,
             endpoints=s.endpoints(),
             timeout=s.timeout,
             shop_id=s.shop_id,

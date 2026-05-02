@@ -21,14 +21,12 @@ def endpoints() -> Endpoints:
     return Endpoints(base_url="https://api.example.com", auth_base_url="https://api.example.com")
 
 
-def _auth(endpoints, storage=None, username=None, password=None) -> Authenticator:
+def _auth(endpoints, storage=None) -> Authenticator:
     return Authenticator(
         client_id="id",
         client_secret="secret",
         endpoints=endpoints,
         http=httpx.Client(),
-        username=username,
-        password=password,
         storage=storage or InMemoryStorage(),
     )
 
@@ -37,27 +35,17 @@ def test_login_success(httpx_mock, endpoints):
     httpx_mock.add_response(url=AUTH_URL, json=load_fixture("login"))
     storage = InMemoryStorage()
     auth = _auth(endpoints, storage=storage)
-    token = auth.login()
+    token = auth.login("user@example.com", "secret123")
     assert token.access_token == "test-access-token"
     assert token.refresh_token == "test-refresh-token"
     assert not token.is_expired()
     assert storage.load() == token
 
 
-def test_login_client_credentials_grant(httpx_mock, endpoints):
-    httpx_mock.add_response(url=AUTH_URL, json=load_fixture("login"))
-    auth = _auth(endpoints)
-    auth.login()
-    request = httpx_mock.get_requests()[0]
-    body = request.content.decode()
-    assert "grant_type=client_credentials" in body
-    assert "username" not in body
-
-
 def test_login_password_grant(httpx_mock, endpoints):
     httpx_mock.add_response(url=AUTH_URL, json=load_fixture("login"))
-    auth = _auth(endpoints, username="user@example.com", password="secret123")
-    auth.login()
+    auth = _auth(endpoints)
+    auth.login("user@example.com", "secret123")
     request = httpx_mock.get_requests()[0]
     body = request.content.decode()
     assert "grant_type=password" in body
@@ -67,7 +55,7 @@ def test_login_password_grant(httpx_mock, endpoints):
 def test_login_failure(httpx_mock, endpoints):
     httpx_mock.add_response(url=AUTH_URL, status_code=401)
     with pytest.raises(AuthError):
-        _auth(endpoints).login()
+        _auth(endpoints).login("user", "wrong")
 
 
 def test_refresh_token(httpx_mock, endpoints):

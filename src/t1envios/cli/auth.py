@@ -16,7 +16,9 @@ def login() -> None:
     """Authenticate and persist tokens."""
     try:
         client = T1Client.from_settings()
-        client.login()
+        username = typer.prompt("Username")
+        password = typer.prompt("Password", hide_input=True)
+        client.login(username, password)
         rprint(Panel("[green]Login successful.[/green] Tokens stored.", title="t1 auth"))
     except (AuthError, ConfigError, T1Error) as exc:
         rprint(f"[red]Error:[/red] {exc}")

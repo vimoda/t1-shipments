@@ -23,34 +23,23 @@ class Authenticator:
         client_secret: str,
         endpoints: "Endpoints",
         http: httpx.Client,
-        username: str | None = None,
-        password: str | None = None,
         storage: TokenStorage | None = None,
     ) -> None:
         self._client_id = client_id
         self._client_secret = client_secret
         self._endpoints = endpoints
         self._http = http
-        self._username = username
-        self._password = password
         self._storage: TokenStorage = storage if storage is not None else InMemoryStorage()
         self._token: Token | None = None
 
-    def login(self) -> Token:
-        if self._username and self._password:
-            payload = {
-                "grant_type": "password",
-                "client_id": self._client_id,
-                "client_secret": self._client_secret,
-                "username": self._username,
-                "password": self._password,
-            }
-        else:
-            payload = {
-                "grant_type": "client_credentials",
-                "client_id": self._client_id,
-                "client_secret": self._client_secret,
-            }
+    def login(self, username: str, password: str) -> Token:
+        payload = {
+            "grant_type": "password",
+            "client_id": self._client_id,
+            "client_secret": self._client_secret,
+            "username": username,
+            "password": password,
+        }
 
         log.debug("Logging in (grant_type=%s)", payload.get("grant_type"))
         resp = self._http.post(

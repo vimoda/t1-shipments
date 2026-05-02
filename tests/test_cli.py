@@ -76,9 +76,9 @@ def test_quote_cmd(mock_cls):
 def test_auth_login(mock_cls):
     mock_client = MagicMock()
     mock_cls.from_settings.return_value = mock_client
-    result = runner.invoke(app, ["auth", "login"])
+    result = runner.invoke(app, ["auth", "login"], input="user@example.com\nsecret123\n")
     assert result.exit_code == 0
-    mock_client.login.assert_called_once()
+    mock_client.login.assert_called_once_with("user@example.com", "secret123")
 
 
 @patch("t1envios.cli.auth.HybridStorage")
