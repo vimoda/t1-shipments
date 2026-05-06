@@ -480,7 +480,8 @@ Example config for any stdio-based MCP client (`mcp.json`, `claude_desktop_confi
         "T1_CLIENT_ID": "t1envios",
         "T1_CLIENT_SECRET": "<your-secret>",
         "T1_USERNAME": "<your-email>",
-        "T1_PASSWORD": "<your-password>"
+        "T1_PASSWORD": "<your-password>",
+        "T1_ENV": "prod"
       }
     }
   }
@@ -499,7 +500,8 @@ If using `uv` in an isolated environment:
         "T1_CLIENT_ID": "t1envios",
         "T1_CLIENT_SECRET": "<your-secret>",
         "T1_USERNAME": "<your-email>",
-        "T1_PASSWORD": "<your-password>"
+        "T1_PASSWORD": "<your-password>",
+        "T1_ENV": "prod"
       }
     }
   }
