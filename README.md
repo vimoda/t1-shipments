@@ -413,19 +413,97 @@ t1 mcp run       # Start MCP server
 
 ## MCP Server
 
-t1envios ships an [MCP](https://modelcontextprotocol.io) server for use with Claude and other AI assistants.
+t1envios ships an [MCP](https://modelcontextprotocol.io) server compatible with any MCP client (Claude Desktop, opencode, Cursor, IDE plugins, custom stdio clients, etc.).
 
-### Starting the Server
+### Installation
+
+The MCP extra is required:
+
+```bash
+pip install "t1envios[mcp]"
+# or
+uv add "t1envios[mcp]"
+```
+
+### Configuration
+
+The server reads credentials from environment variables (or a `.env` file in the working directory):
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `T1_CLIENT_ID` | Yes | OAuth client ID |
+| `T1_CLIENT_SECRET` | Yes | OAuth client secret |
+| `T1_USERNAME` | Yes* | T1Envios account email |
+| `T1_PASSWORD` | Yes* | T1Envios account password |
+| `T1_ENV` | No | `dev` (default) or `prod` |
+
+`T1_USERNAME`/`T1_PASSWORD` enable automatic bearer-token login on first use. If omitted, the server falls back to a token previously stored by `t1 auth login`.
+
+### Auth & Token Lifecycle
+
+The server keeps a **single `T1Client` instance** alive for the entire MCP session. Before every tool call it calls `ensure_valid()`:
+
+1. Token valid → proceeds immediately.
+2. Token expires within 60 s → **refresh** using `refresh_token` (no re-login needed).
+3. No session / refresh expired → **re-login** with `T1_USERNAME`/`T1_PASSWORD`.
+
+No manual intervention is required at any point.
+
+### Testing with MCP Inspector
+
+```bash
+# requires mcp[cli] — already included in the mcp extra
+uv run mcp dev src/t1envios/mcp/server.py
+```
+
+Opens a local web inspector where you can invoke tools interactively. Make sure the `.env` file (or env vars) is present before running.
+
+### Starting the Server (production)
 
 ```bash
 t1 mcp run
+# or
+python -m t1envios.mcp.server
 ```
 
-Or programmatically:
+### Client Configuration
 
-```python
-from t1envios.mcp.server import main
-main()
+Example config for any stdio-based MCP client (`mcp.json`, `claude_desktop_config.json`, etc.):
+
+```json
+{
+  "mcpServers": {
+    "t1envios": {
+      "command": "python",
+      "args": ["-m", "t1envios.mcp.server"],
+      "env": {
+        "T1_CLIENT_ID": "t1envios",
+        "T1_CLIENT_SECRET": "<your-secret>",
+        "T1_USERNAME": "<your-email>",
+        "T1_PASSWORD": "<your-password>"
+      }
+    }
+  }
+}
+```
+
+If using `uv` in an isolated environment:
+
+```json
+{
+  "mcpServers": {
+    "t1envios": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "t1envios.mcp.server"],
+      "env": {
+        "T1_CLIENT_ID": "t1envios",
+        "T1_CLIENT_SECRET": "<your-secret>",
+        "T1_USERNAME": "<your-email>",
+        "T1_PASSWORD": "<your-password>"
+      }
+    }
+  }
+}
 ```
 
 ### Available Tools

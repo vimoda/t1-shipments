@@ -79,6 +79,8 @@ class Settings(BaseSettings):
 
     client_id: str
     client_secret: SecretStr
+    username: str | None = None
+    password: SecretStr | None = None
     env: Literal["dev", "prod"] = "dev"
     base_url: str | None = None
     auth_url: str | None = None
