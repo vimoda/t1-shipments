@@ -8,7 +8,8 @@ TOOL_DEF = types.Tool(
     name="list_carriers",
     description=(
         "List all shipping carriers and services available in your T1Envios account. "
-        "Call this to discover which carriers (DHL, FedEx, etc.) are enabled before quoting or scheduling pickups."
+        "Call this to discover which carriers (DHL, FedEx, etc.) are enabled before quoting or scheduling pickups. "
+        "Respond with a simple list: carrier name and available services. No extra explanation."
     ),
     inputSchema=_SCHEMA,
 )

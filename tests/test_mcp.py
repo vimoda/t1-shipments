@@ -194,6 +194,75 @@ class TestNewShipmentTools:
         with pytest.raises(ValueError, match="Unknown tool"):
             st.handle("nonexistent", {}, client)
 
+
+# ---------------------------------------------------------------------------
+# Quote normalization tests
+# ---------------------------------------------------------------------------
+
+class TestQuoteNormalization:
+    def _make_resp(self, detail):
+        from t1envios.core.models.quote import QuoteResponse
+        return QuoteResponse(success=True, detail=detail)
+
+    def test_no_insurance_basic_fields(self):
+        from t1envios.mcp.tools.shipments import _normalize_quote
+        resp = self._make_resp([{
+            "token": "qt-001", "service_id": "DHL", "service_name": "DHL Express",
+            "total_cost": 120.0, "currency": "MXN", "delivery_days": 3,
+        }])
+        result = _normalize_quote(resp, insurance_requested=False)
+        assert result["insurance_requested"] is False
+        rate = result["rates"][0]
+        assert rate["quote_token"] == "qt-001"
+        assert rate["carrier"] == "DHL"
+        assert rate["total_cost"] == 120.0
+        assert "insurance_cost" not in rate
+        assert "insurance_requested" not in rate
+
+    def test_insurance_separated_when_field_present(self):
+        from t1envios.mcp.tools.shipments import _normalize_quote
+        resp = self._make_resp([{
+            "token": "qt-001", "service_id": "DHL", "service_name": "DHL Express",
+            "total_cost": 135.0, "insurance_cost": 15.0, "currency": "MXN", "delivery_days": 3,
+        }])
+        result = _normalize_quote(resp, insurance_requested=True)
+        rate = result["rates"][0]
+        assert rate["insurance_requested"] is True
+        assert rate["insurance_cost"] == 15.0
+        assert rate["base_cost"] == 120.0
+        assert rate["total_cost"] == 135.0
+
+    def test_insurance_bundled_adds_note(self):
+        from t1envios.mcp.tools.shipments import _normalize_quote
+        resp = self._make_resp([{
+            "token": "qt-001", "service_id": "FedEx", "total_cost": 150.0, "currency": "MXN",
+        }])
+        result = _normalize_quote(resp, insurance_requested=True)
+        rate = result["rates"][0]
+        assert "insurance_note" in rate
+        assert "insurance_cost" not in rate
+
+    def test_base_cost_inferred_from_total_minus_insurance(self):
+        from t1envios.mcp.tools.shipments import _normalize_quote
+        resp = self._make_resp([{
+            "token": "qt-1", "service_id": "UPS", "total_cost": 200.0,
+            "costo_seguro": 20.0, "currency": "MXN",
+        }])
+        result = _normalize_quote(resp, insurance_requested=True)
+        rate = result["rates"][0]
+        assert rate["insurance_cost"] == 20.0
+        assert rate["base_cost"] == 180.0
+
+    def test_rate_count_and_structure(self):
+        from t1envios.mcp.tools.shipments import _normalize_quote
+        resp = self._make_resp([
+            {"token": "a", "service_id": "DHL", "total_cost": 100.0, "currency": "MXN"},
+            {"token": "b", "service_id": "FedEx", "total_cost": 120.0, "currency": "MXN"},
+        ])
+        result = _normalize_quote(resp, insurance_requested=False)
+        assert result["rate_count"] == 2
+        assert len(result["rates"]) == 2
+
     def test_all_tools_list_length(self):
         from t1envios.mcp.tools import shipments as st
         names = {t.name for t in st.ALL_TOOLS}

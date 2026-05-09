@@ -73,9 +73,14 @@ def test_quote_cmd(mock_cls):
 
 
 @patch("t1envios.cli.auth.T1Client")
-def test_auth_login(mock_cls):
+@patch("t1envios.cli.auth.Settings")
+def test_auth_login(mock_settings_cls, mock_cls):
+    mock_settings_cls.return_value.username = None
+    mock_settings_cls.return_value.password = None
     mock_client = MagicMock()
     mock_cls.from_settings.return_value = mock_client
+    mock_client.login.return_value.refresh_token = "ref"
+    mock_client.login.return_value.expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=1)
     result = runner.invoke(app, ["auth", "login"], input="user@example.com\nsecret123\n")
     assert result.exit_code == 0
     mock_client.login.assert_called_once_with("user@example.com", "secret123")
@@ -94,4 +99,5 @@ def test_auth_status_valid(mock_storage_cls):
     mock_storage_cls.return_value.load.return_value = _valid_token()
     result = runner.invoke(app, ["auth", "status"])
     assert result.exit_code == 0
-    assert "Authenticated" in result.output
+    assert "Válido" in result.output
+    assert "Refresh token" in result.output

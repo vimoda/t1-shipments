@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import mcp.types as types
 
-from ...core.models.quote import QuoteRequest
+from ...core.models.quote import QuoteRequest, QuoteResponse
 from ...core.models.shipment import ShipmentRequest
 from ...core.models.tracking import PickupRequest
 
@@ -10,7 +10,9 @@ TOOL_GET_BALANCE = types.Tool(
     name="get_balance",
     description=(
         "Get the current account balance in MXN / Obtiene el saldo actual en MXN. "
-        "Call before creating shipments to verify sufficient funds."
+        "Call before creating shipments to verify sufficient funds. "
+        "Respond with exactly: 'Tu saldo disponible es $X,XXX.XX MXN.' "
+        "If balance < 200 MXN add: 'Es posible que no tengas fondos suficientes para crear un envío.'"
     ),
     inputSchema={"type": "object", "properties": {}},
 )
@@ -19,7 +21,9 @@ TOOL_TRACK_GUIDE = types.Tool(
     name="track_guide",
     description=(
         "Track a shipment by guide number / Rastrea un envío por número de guía. "
-        "Returns current status, estimated delivery date, and event history."
+        "Returns current status, estimated delivery date, and event history. "
+        "Respond with: status, estimated delivery date, and last event. "
+        "One short paragraph max. If delayed, say so explicitly."
     ),
     inputSchema={
         "type": "object",
@@ -33,7 +37,8 @@ TOOL_TRACK_DETAIL = types.Tool(
     description=(
         "Get full tracking detail for a shipment / Obtiene el detalle completo de rastreo. "
         "Returns all tracking events with timestamps, locations, and carrier info. "
-        "Use when track_guide shows a delayed or stuck status."
+        "Use when track_guide shows a delayed or stuck status. "
+        "Respond with a bullet list of events (date, location, status). Most recent first. No extra commentary."
     ),
     inputSchema={
         "type": "object",
@@ -46,10 +51,15 @@ TOOL_QUOTE = types.Tool(
     name="quote_shipment",
     description=(
         "Get available shipping rates for a package / Cotiza tarifas de envío. "
-        "Returns carrier options with prices. "
-        "Always call this BEFORE create_shipment — the quote_token is required. "
+        "Returns a list of rates. Each rate includes: quote_token (required for create_shipment), "
+        "carrier, service, base_cost, insurance_cost (only when insurance=true), total_cost, currency, estimated_days. "
+        "When insurance=true, base_cost and insurance_cost are shown separately so the user can compare. "
+        "Always call this BEFORE create_shipment — quote_token from the selected rate is required. "
         "Dimension defaults if omitted: width=30cm, height=20cm, length=15cm, "
-        "package_value=500 MXN, packages=1, package_type=2 (parcel)."
+        "package_value=500 MXN, packages=1, package_type=2 (parcel). "
+        "Respond with a table or list: carrier, service, total cost, days. "
+        "If insurance was requested, show base cost + insurance cost + total separately per rate. "
+        "End with: '¿Con cuál paquetería deseas proceder?'"
     ),
     inputSchema={
         "type": "object",
@@ -79,7 +89,9 @@ TOOL_CREATE_SHIPMENT = types.Tool(
         "Create a shipment and generate a shipping guide / Crea un envío y genera la guía. "
         "Requires a quote_token from quote_shipment. "
         "Flow: quote_shipment → select rate → create_shipment. "
-        "If the origin ZIP has multiple neighborhoods, ask the user which one applies before calling."
+        "If the origin ZIP has multiple neighborhoods, ask the user which one applies before calling. "
+        "On success respond with: guide number, carrier, estimated delivery date, and label download link. "
+        "One sentence each. No JSON, no raw data."
     ),
     inputSchema={
         "type": "object",
@@ -134,7 +146,8 @@ TOOL_DOWNLOAD_LABEL = types.Tool(
     name="download_label",
     description=(
         "Download the shipping label PDF for a guide / Descarga la etiqueta PDF de una guía. "
-        "Use the guide_link returned by create_shipment. Returns base64-encoded PDF content."
+        "Use the guide_link returned by create_shipment. Returns base64-encoded PDF content. "
+        "Respond with: 'Etiqueta lista. Puedes descargarla aquí: [link]' Do not show the base64 data."
     ),
     inputSchema={
         "type": "object",
@@ -150,7 +163,8 @@ TOOL_SCHEDULE_PICKUP = types.Tool(
     description=(
         "⚠️ This operation has a monetary cost / Esta operación tiene costo monetario. "
         "Schedule a package pickup at the origin address / Programa recolección en la dirección de origen. "
-        "The origin address must be registered in T1Envios beforehand."
+        "The origin address must be registered in T1Envios beforehand. "
+        "On success respond with: 'Recolección programada para [fecha] entre [open_time] y [close_time] con [carrier].' One line only."
     ),
     inputSchema={
         "type": "object",
@@ -205,7 +219,8 @@ def handle(name: str, arguments: dict, client) -> dict:
         return client.track_detail(arguments["guide"]).model_dump()
     if name == "quote_shipment":
         req = QuoteRequest(**arguments)
-        return client.quote(req).model_dump()
+        resp = client.quote(req)
+        return _normalize_quote(resp, insurance_requested=arguments.get("insurance", False))
     if name == "create_shipment":
         req = ShipmentRequest(**arguments)
         return client.create_shipment(req).model_dump()
@@ -217,3 +232,81 @@ def handle(name: str, arguments: dict, client) -> dict:
         req = PickupRequest(**arguments)
         return client.schedule_pickup(req).model_dump()
     raise ValueError(f"Unknown tool: {name}")
+
+
+# Field name candidates for insurance cost as returned by the T1 API
+_INSURANCE_FIELDS = ("insurance_cost", "costo_seguro", "seguro", "insurance", "insurance_amount")
+# Field name candidates for base (pre-insurance) cost
+_BASE_COST_FIELDS = ("base_cost", "costo_base", "subtotal", "cost_without_insurance")
+# Field name candidates for quote token
+_TOKEN_FIELDS = ("token", "quote_token", "rate_token", "id")
+
+
+def _normalize_quote(resp: QuoteResponse, *, insurance_requested: bool) -> dict:
+    """Normalize raw API detail into a consistent structure the LLM can reason about.
+
+    Promotes key fields to top-level, separates insurance cost when present,
+    and always exposes quote_token explicitly.
+    """
+    rates = []
+    for raw in (resp.detail or []):
+        if not isinstance(raw, dict):
+            rates.append(raw)
+            continue
+
+        total = raw.get("total_cost") or raw.get("costo_total") or raw.get("price") or 0.0
+        currency = raw.get("currency") or raw.get("moneda") or "MXN"
+        carrier = raw.get("carrier") or raw.get("service_id") or raw.get("mensajeria") or ""
+        service = raw.get("service") or raw.get("service_name") or raw.get("servicio") or ""
+        days = raw.get("estimated_days") or raw.get("delivery_days") or raw.get("dias_entrega")
+
+        # Resolve quote_token
+        quote_token = None
+        for f in _TOKEN_FIELDS:
+            if v := raw.get(f):
+                quote_token = v
+                break
+
+        # Resolve insurance cost (only meaningful when requested)
+        insurance_cost = None
+        if insurance_requested:
+            for f in _INSURANCE_FIELDS:
+                if (v := raw.get(f)) is not None:
+                    insurance_cost = float(v)
+                    break
+
+        # Resolve base cost
+        base_cost = None
+        for f in _BASE_COST_FIELDS:
+            if (v := raw.get(f)) is not None:
+                base_cost = float(v)
+                break
+        if base_cost is None and insurance_cost is not None:
+            base_cost = round(total - insurance_cost, 2)
+
+        rate: dict = {
+            "quote_token": quote_token,
+            "carrier": carrier,
+            "service": service,
+            "total_cost": total,
+            "currency": currency,
+        }
+        if days is not None:
+            rate["estimated_days"] = days
+        if insurance_requested:
+            rate["insurance_requested"] = True
+            if insurance_cost is not None:
+                rate["base_cost"] = base_cost
+                rate["insurance_cost"] = insurance_cost
+            else:
+                # Insurance bundled in total — flag it so LLM doesn't present it as unknown
+                rate["insurance_note"] = "insurance included in total_cost"
+
+        rates.append(rate)
+
+    return {
+        "success": resp.success,
+        "insurance_requested": insurance_requested,
+        "rates": rates,
+        "rate_count": len(rates),
+    }

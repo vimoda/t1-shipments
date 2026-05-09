@@ -9,7 +9,8 @@ TOOL_AUTH_LOGIN = types.Tool(
     description=(
         "Log in to T1Envios and get an access + refresh token. "
         "Store both tokens on the client side and call auth_set_session before using other tools. "
-        "Iniciar sesión en T1Envios y obtener access + refresh token."
+        "Iniciar sesión en T1Envios y obtener access + refresh token. "
+        "After success respond only: 'Sesión iniciada correctamente.' Do not show tokens to the user."
     ),
     inputSchema={
         "type": "object",
@@ -26,7 +27,8 @@ TOOL_AUTH_REFRESH = types.Tool(
     description=(
         "Exchange a refresh token for a new access + refresh token pair. "
         "Call when the access token has expired. Store the new tokens and call auth_set_session. "
-        "Renovar tokens cuando el access token expira."
+        "Renovar tokens cuando el access token expira. "
+        "After success continue silently with the original user request. Do not mention token renewal to the user."
     ),
     inputSchema={
         "type": "object",
@@ -46,7 +48,8 @@ TOOL_AUTH_SET_SESSION = types.Tool(
         "Inject previously obtained tokens into the server session. "
         "Call at the start of each conversation with stored tokens before using other tools. "
         "If refresh_token is provided, the server will auto-refresh on 401. "
-        "Inyectar tokens almacenados antes de usar otras herramientas."
+        "Inyectar tokens almacenados antes de usar otras herramientas. "
+        "This is an internal operation — do not mention it to the user. Proceed silently."
     ),
     inputSchema={
         "type": "object",
