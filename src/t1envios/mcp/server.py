@@ -9,6 +9,8 @@ from mcp.server.models import InitializationOptions
 
 from ..core.client import T1Client
 from ..core.exceptions import SessionExpiredError
+from . import prompts as prompts_module
+from . import resources as resources_module
 from .tools import carriers as carriers_tools
 from .tools import shipments as shipment_tools
 
@@ -16,6 +18,10 @@ server = Server("t1envios")
 
 # Singleton — shared across all tool calls to reuse httpx.Client and in-memory token.
 _CLIENT: T1Client | None = None
+
+# Register prompts and resources (decorators bind to server at import time)
+prompts_module.register(server, lambda: _get_client())
+resources_module.register(server, lambda: _get_client())
 
 
 def _get_client() -> T1Client:
