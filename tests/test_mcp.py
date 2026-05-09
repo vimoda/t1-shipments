@@ -20,16 +20,16 @@ class TestPrompts:
     def test_list_prompts_names(self):
         names = {p.name for p in prompts_module._PROMPTS}
         assert names == {
-            "quote_simple",
-            "quote_and_ship",
+            "quote",
+            "ship",
             "track_status",
             "schedule_pickup_tomorrow",
             "check_balance_before_ship",
         }
 
-    def test_quote_simple_es(self):
+    def test_quote_es(self):
         result = prompts_module._get_prompt(
-            "quote_simple",
+            "quote",
             {"origin_zip": "02719", "dest_zip": "40900", "weight_kg": "1", "insurance": "false"},
         )
         assert result.messages
@@ -37,40 +37,46 @@ class TestPrompts:
         assert "02719" in text
         assert "40900" in text
         assert "sin seguro" in text
+        assert "Peso volumétrico" in text
+        assert "Quote token" in text
+        assert "Dimensiones" in text
 
-    def test_quote_simple_en(self):
+    def test_quote_en(self):
         result = prompts_module._get_prompt(
-            "quote_simple",
+            "quote",
             {"origin_zip": "02719", "dest_zip": "40900", "weight_kg": "1", "insurance": "false", "lang": "en"},
         )
         text = result.messages[0].content.text
         assert "insurance=no" in text
         assert "quote_shipment" in text
+        assert "Volumetric weight" in text
+        assert "Quote token" in text
+        assert "Dimensions" in text
 
-    def test_quote_simple_with_insurance(self):
+    def test_quote_with_insurance(self):
         result = prompts_module._get_prompt(
-            "quote_simple",
+            "quote",
             {"origin_zip": "02719", "dest_zip": "40900", "weight_kg": "2", "insurance": "true"},
         )
         text = result.messages[0].content.text
         assert "con seguro" in text
 
-    def test_quote_and_ship_es(self):
-        result = prompts_module._get_prompt(
-            "quote_and_ship",
-            {"origin_zip": "02719", "dest_zip": "40900", "weight_kg": "1"},
-        )
+    def test_ship_es(self):
+        result = prompts_module._get_prompt("ship", {"quote_token": "tok-abc"})
         text = result.messages[0].content.text
+        assert "tok-abc" in text
         assert "create_shipment" in text
         assert "costo monetario" in text
+        assert "Remitente" in text
+        assert "Destinatario" in text
 
-    def test_quote_and_ship_en(self):
-        result = prompts_module._get_prompt(
-            "quote_and_ship",
-            {"origin_zip": "02719", "dest_zip": "40900", "weight_kg": "1", "lang": "en"},
-        )
+    def test_ship_en(self):
+        result = prompts_module._get_prompt("ship", {"quote_token": "tok-abc", "lang": "en"})
         text = result.messages[0].content.text
+        assert "tok-abc" in text
         assert "monetary cost" in text
+        assert "Sender" in text
+        assert "Recipient" in text
 
     def test_track_status_es(self):
         result = prompts_module._get_prompt("track_status", {"guide": "1373188795"})
@@ -204,60 +210,80 @@ class TestQuoteNormalization:
         from t1envios.core.models.quote import QuoteResponse
         return QuoteResponse(success=True, detail=detail)
 
-    def test_no_insurance_basic_fields(self):
+    def _flat_rate(self, **kwargs):
+        base = {
+            "token": "qt-001", "carrier": "DHL", "service_name": "DHL Express",
+            "service_type": "Economico", "cost": 100.0, "total_cost": 100.0,
+            "currency": "MXN", "delivery_days": 3, "delivery_date_carrier": "2026-05-12",
+            "weight": 1.0, "volumetric_weight": 0.2,
+            "length": 10.0, "width": 10.0, "height": 10.0,
+            "package_value": 500.0, "insurance": False, "recommended": False,
+        }
+        base.update(kwargs)
+        return base
+
+    def test_basic_fields_exposed(self):
         from t1envios.mcp.tools.shipments import _normalize_quote
-        resp = self._make_resp([{
-            "token": "qt-001", "service_id": "DHL", "service_name": "DHL Express",
-            "total_cost": 120.0, "currency": "MXN", "delivery_days": 3,
-        }])
+        resp = self._make_resp([self._flat_rate(token="tok-x", carrier="FEDEX")])
         result = _normalize_quote(resp, insurance_requested=False)
         assert result["insurance_requested"] is False
         rate = result["rates"][0]
-        assert rate["quote_token"] == "qt-001"
-        assert rate["carrier"] == "DHL"
-        assert rate["total_cost"] == 120.0
+        assert rate["quote_token"] == "tok-x"
+        assert rate["carrier"] == "FEDEX"
+        assert rate["service"] == "DHL Express"
+        assert rate["service_type"] == "Economico"
+        assert rate["base_cost"] == 100.0
+        assert rate["total_cost"] == 100.0
+        assert rate["weight_kg"] == 1.0
+        assert rate["volumetric_weight_kg"] == 0.2
+        assert rate["dimensions_cm"] == {"length": 10.0, "width": 10.0, "height": 10.0}
+        assert rate["delivery_date"] == "2026-05-12"
+        assert rate["recommended"] is False
         assert "insurance_cost" not in rate
-        assert "insurance_requested" not in rate
+        assert "insurance_note" not in rate
 
-    def test_insurance_separated_when_field_present(self):
+    def test_insurance_applied_derives_insurance_cost(self):
         from t1envios.mcp.tools.shipments import _normalize_quote
-        resp = self._make_resp([{
-            "token": "qt-001", "service_id": "DHL", "service_name": "DHL Express",
-            "total_cost": 135.0, "insurance_cost": 15.0, "currency": "MXN", "delivery_days": 3,
-        }])
+        resp = self._make_resp([self._flat_rate(insurance=True, cost=100.0, total_cost=120.0)])
         result = _normalize_quote(resp, insurance_requested=True)
         rate = result["rates"][0]
-        assert rate["insurance_requested"] is True
-        assert rate["insurance_cost"] == 15.0
-        assert rate["base_cost"] == 120.0
-        assert rate["total_cost"] == 135.0
+        assert rate["insurance_applied"] is True
+        assert rate["insurance_cost"] == 20.0
+        assert rate["base_cost"] == 100.0
+        assert rate["total_cost"] == 120.0
 
-    def test_insurance_bundled_adds_note(self):
+    def test_insurance_requested_but_not_applied_adds_note(self):
         from t1envios.mcp.tools.shipments import _normalize_quote
-        resp = self._make_resp([{
-            "token": "qt-001", "service_id": "FedEx", "total_cost": 150.0, "currency": "MXN",
-        }])
+        resp = self._make_resp([self._flat_rate(insurance=False)])
         result = _normalize_quote(resp, insurance_requested=True)
         rate = result["rates"][0]
         assert "insurance_note" in rate
         assert "insurance_cost" not in rate
 
-    def test_base_cost_inferred_from_total_minus_insurance(self):
+    def test_no_insurance_path_omits_insurance_fields(self):
         from t1envios.mcp.tools.shipments import _normalize_quote
-        resp = self._make_resp([{
-            "token": "qt-1", "service_id": "UPS", "total_cost": 200.0,
-            "costo_seguro": 20.0, "currency": "MXN",
-        }])
-        result = _normalize_quote(resp, insurance_requested=True)
+        resp = self._make_resp([self._flat_rate(insurance=True, cost=100.0, total_cost=120.0)])
+        result = _normalize_quote(resp, insurance_requested=False)
         rate = result["rates"][0]
-        assert rate["insurance_cost"] == 20.0
-        assert rate["base_cost"] == 180.0
+        assert "insurance_cost" not in rate
+        assert "insurance_note" not in rate
+
+    def test_rates_sorted_by_total_cost_with_recommended_first(self):
+        from t1envios.mcp.tools.shipments import _normalize_quote
+        resp = self._make_resp([
+            self._flat_rate(token="cheap", total_cost=80.0, cost=80.0, recommended=False),
+            self._flat_rate(token="medium", total_cost=100.0, cost=100.0, recommended=True),
+            self._flat_rate(token="expensive", total_cost=150.0, cost=150.0, recommended=False),
+        ])
+        result = _normalize_quote(resp, insurance_requested=False)
+        tokens = [r["quote_token"] for r in result["rates"]]
+        assert tokens == ["medium", "cheap", "expensive"]
 
     def test_rate_count_and_structure(self):
         from t1envios.mcp.tools.shipments import _normalize_quote
         resp = self._make_resp([
-            {"token": "a", "service_id": "DHL", "total_cost": 100.0, "currency": "MXN"},
-            {"token": "b", "service_id": "FedEx", "total_cost": 120.0, "currency": "MXN"},
+            self._flat_rate(token="a", total_cost=100.0),
+            self._flat_rate(token="b", total_cost=120.0),
         ])
         result = _normalize_quote(resp, insurance_requested=False)
         assert result["rate_count"] == 2

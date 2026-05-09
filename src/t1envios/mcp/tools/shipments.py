@@ -50,16 +50,22 @@ TOOL_TRACK_DETAIL = types.Tool(
 TOOL_QUOTE = types.Tool(
     name="quote_shipment",
     description=(
-        "Get available shipping rates for a package / Cotiza tarifas de envío. "
-        "Returns a list of rates. Each rate includes: quote_token (required for create_shipment), "
-        "carrier, service, base_cost, insurance_cost (only when insurance=true), total_cost, currency, estimated_days. "
-        "When insurance=true, base_cost and insurance_cost are shown separately so the user can compare. "
-        "Always call this BEFORE create_shipment — quote_token from the selected rate is required. "
+        "Get available shipping rates / Cotiza tarifas de envío. "
+        "Returns a list sorted cheapest-first; rows with recommended=true appear first. "
+        "Each rate exposes: quote_token, carrier, service, service_type, base_cost, total_cost, "
+        "currency, estimated_days, delivery_date, weight_kg, volumetric_weight_kg, "
+        "dimensions_cm {length,width,height}, package_value, packages, insurance_applied, recommended. "
+        "When insurance_requested=true: if insurance_applied=true and base_cost differs from total_cost, "
+        "the rate also includes insurance_cost (= total_cost - base_cost). "
+        "If insurance_applied=false, the rate includes insurance_note explaining insurance was not applied. "
+        "Always call this BEFORE create_shipment — quote_token is required to ship. "
         "Dimension defaults if omitted: width=30cm, height=20cm, length=15cm, "
         "package_value=500 MXN, packages=1, package_type=2 (parcel). "
-        "Respond with a numbered table. Columns: #, Carrier, Service, Total cost, Days, Type, Dimensions (cm), Actual weight (kg), Volumetric weight (kg), Quote token. "
-        "Show volumetric weight only when dimensions were provided; otherwise use '—'. "
-        "When insurance was requested, append a breakdown per row: base cost + insurance cost = total. "
+        "Respond with a numbered table. Columns: #, Carrier, Service, Type, Total cost, Currency, "
+        "Days, Estimated delivery, Weight (kg), Volumetric weight (kg), Dimensions (cm), Quote token. "
+        "Highlight rows with recommended=true with ★. "
+        "If insurance was requested, append '+ insurance_cost = total' per row where insurance_applied=true; "
+        "mark insurance_note rows clearly. "
         "End with: '¿Con qué servicio deseas proceder?'"
     ),
     inputSchema={
@@ -235,79 +241,54 @@ def handle(name: str, arguments: dict, client) -> dict:
     raise ValueError(f"Unknown tool: {name}")
 
 
-# Field name candidates for insurance cost as returned by the T1 API
-_INSURANCE_FIELDS = ("insurance_cost", "costo_seguro", "seguro", "insurance", "insurance_amount")
-# Field name candidates for base (pre-insurance) cost
-_BASE_COST_FIELDS = ("base_cost", "costo_base", "subtotal", "cost_without_insurance")
-# Field name candidates for quote token
-_TOKEN_FIELDS = ("token", "quote_token", "rate_token", "id")
-
-
 def _normalize_quote(resp: QuoteResponse, *, insurance_requested: bool) -> dict:
-    """Normalize raw API detail into a consistent structure the LLM can reason about.
-
-    Promotes key fields to top-level, separates insurance cost when present,
-    and always exposes quote_token explicitly.
-    """
     rates = []
     for raw in (resp.detail or []):
         if not isinstance(raw, dict):
             rates.append(raw)
             continue
 
-        total = raw.get("total_cost") or raw.get("costo_total") or raw.get("price") or 0.0
-        currency = raw.get("currency") or raw.get("moneda") or "MXN"
-        carrier = raw.get("carrier") or raw.get("service_id") or raw.get("mensajeria") or ""
-        service = raw.get("service") or raw.get("service_name") or raw.get("servicio") or ""
-        days = raw.get("estimated_days") or raw.get("delivery_days") or raw.get("dias_entrega")
-
-        # Resolve quote_token
-        quote_token = None
-        for f in _TOKEN_FIELDS:
-            if v := raw.get(f):
-                quote_token = v
-                break
-
-        # Resolve insurance cost (only meaningful when requested)
-        insurance_cost = None
-        if insurance_requested:
-            for f in _INSURANCE_FIELDS:
-                if (v := raw.get(f)) is not None:
-                    insurance_cost = float(v)
-                    break
-
-        # Resolve base cost
-        base_cost = None
-        for f in _BASE_COST_FIELDS:
-            if (v := raw.get(f)) is not None:
-                base_cost = float(v)
-                break
-        if base_cost is None and insurance_cost is not None:
-            base_cost = round(total - insurance_cost, 2)
+        base_cost = raw.get("cost")
+        total_cost = raw.get("total_cost") or 0.0
+        insurance_applied = bool(raw.get("insurance", False))
 
         rate: dict = {
-            "quote_token": quote_token,
-            "carrier": carrier,
-            "service": service,
-            "total_cost": total,
-            "currency": currency,
+            "quote_token": raw.get("token"),
+            "carrier": raw.get("carrier") or raw.get("service_id") or "",
+            "service": raw.get("service_name") or raw.get("service") or "",
+            "service_type": raw.get("service_type"),
+            "base_cost": base_cost,
+            "total_cost": total_cost,
+            "currency": raw.get("currency", "MXN"),
+            "estimated_days": raw.get("delivery_days"),
+            "delivery_date": raw.get("delivery_date_carrier") or raw.get("delivery_date_claro"),
+            "weight_kg": raw.get("weight"),
+            "volumetric_weight_kg": raw.get("volumetric_weight"),
+            "dimensions_cm": {
+                "length": raw.get("length"),
+                "width": raw.get("width"),
+                "height": raw.get("height"),
+            },
+            "package_value": raw.get("package_value"),
+            "packages": raw.get("total_packages", 1),
+            "insurance_applied": insurance_applied,
+            "recommended": bool(raw.get("recommended", False)),
         }
-        if days is not None:
-            rate["estimated_days"] = days
+
         if insurance_requested:
-            rate["insurance_requested"] = True
-            if insurance_cost is not None:
-                rate["base_cost"] = base_cost
-                rate["insurance_cost"] = insurance_cost
-            else:
-                # Insurance bundled in total — flag it so LLM doesn't present it as unknown
-                rate["insurance_note"] = "insurance included in total_cost"
+            if insurance_applied and base_cost is not None and base_cost != total_cost:
+                rate["insurance_cost"] = round(total_cost - base_cost, 2)
+            elif not insurance_applied:
+                rate["insurance_note"] = "Insurance was requested but this rate did not apply it."
 
         rates.append(rate)
+
+    # recommended rows first, then ascending total_cost
+    rates.sort(key=lambda r: (not r.get("recommended", False), r.get("total_cost") or 0.0))
 
     return {
         "success": resp.success,
         "insurance_requested": insurance_requested,
-        "rates": rates,
         "rate_count": len(rates),
+        "rates": rates,
     }

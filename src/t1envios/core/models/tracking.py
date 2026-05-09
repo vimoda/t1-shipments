@@ -54,6 +54,11 @@ class Balance(BaseModel):
     commerce_id_t1_pages: str | None = None
     credit: bool = False
 
+    @computed_field  # type: ignore[misc]
+    @property
+    def can_ship(self) -> bool:
+        return self.amount > 0 or self.credit
+
 
 class Carrier(BaseModel):
     carrier_id: str

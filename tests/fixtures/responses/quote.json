@@ -3,22 +3,51 @@
   "message": null,
   "detail": [
     {
-      "token": "qt-001",
       "service_id": "FEDEX",
-      "service_name": "FedEx Express",
-      "service_type": "express",
-      "total_cost": 150.0,
+      "service_name": "FEDEX_EXPRESS_SAVER",
+      "service_type": "Economico / Día siguiente / semanal",
+      "carrier": "FEDEX",
+      "cost": 91.55,
+      "total_cost": 140.85,
+      "delivery_date_claro": "2026-05-15",
+      "delivery_date_carrier": "2026-05-14",
+      "delivery_days": 5,
       "currency": "MXN",
-      "delivery_days": 2
+      "weight": 1.0,
+      "volumetric_weight": 0.2,
+      "length": 10.0,
+      "width": 10.0,
+      "height": 10.0,
+      "dimensions": "CM",
+      "token": "qt-fedex-001",
+      "insurance": false,
+      "package_value": 500.0,
+      "recommended": false,
+      "shipment_cost": 140.84
     },
     {
-      "token": "qt-002",
       "service_id": "DHL",
-      "service_name": "DHL Express",
-      "service_type": "express",
-      "total_cost": 120.0,
+      "service_name": "DHL_EXPRESS_WORLDWIDE",
+      "service_type": "Express internacional",
+      "carrier": "DHL",
+      "cost": 105.0,
+      "total_cost": 155.0,
+      "delivery_date_claro": "2026-05-13",
+      "delivery_date_carrier": "2026-05-12",
+      "delivery_days": 3,
       "currency": "MXN",
-      "delivery_days": 3
+      "weight": 1.0,
+      "volumetric_weight": 0.2,
+      "length": 10.0,
+      "width": 10.0,
+      "height": 10.0,
+      "dimensions": "CM",
+      "token": "qt-dhl-002",
+      "insurance": false,
+      "package_value": 500.0,
+      "recommended": true,
+      "shipment_cost": 155.0
     }
-  ]
+  ],
+  "carriers": ""
 }

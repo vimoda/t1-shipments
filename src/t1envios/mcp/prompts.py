@@ -19,13 +19,11 @@ _PROMPTS: list[types.Prompt] = [
         ],
     ),
     types.Prompt(
-        name="quote_and_ship",
-        description="Flujo completo: cotizar y crear envío / Full flow: quote then create shipment",
+        name="ship",
+        description="Crear envío con tarifa elegida / Create shipment from a selected quote_token",
         arguments=[
-            types.PromptArgument(name="origin_zip", description="Código postal origen / Origin ZIP", required=True),
-            types.PromptArgument(name="dest_zip", description="Código postal destino / Destination ZIP", required=True),
-            types.PromptArgument(name="weight_kg", description="Peso en kg / Weight in kg", required=True),
-            types.PromptArgument(name="insurance", description="¿Con seguro? true/false / Include insurance? true/false", required=False),
+            types.PromptArgument(name="quote_token", description="Token de la tarifa elegida (de /quote) / Selected rate token from quote", required=True),
+            types.PromptArgument(name="content", description="Contenido del paquete, máx 25 chars / Package contents, max 25 chars", required=False),
             types.PromptArgument(name="lang", description="Response language: es (default) or en", required=False),
         ],
     ),
@@ -64,7 +62,7 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
     args = arguments or {}
     lang = _lang(args)
 
-    if name == "quote_simple":
+    if name == "quote":
         origin = args.get("origin_zip", "?")
         dest = args.get("dest_zip", "?")
         weight = args.get("weight_kg", "?")
@@ -75,7 +73,12 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
                 f"insurance={'yes' if str(insurance).lower() == 'true' else 'no'}. "
                 "Use these defaults if not specified: width=30cm, height=20cm, length=15cm, "
                 "package_value=500 MXN, packages=1, package_type=2 (parcel). "
-                "Call quote_shipment with those values and show me the available rates sorted by price."
+                "Call quote_shipment with those values and present the results as a numbered table. "
+                "Columns: #, Carrier, Service, Type, Total cost, Currency, Days, Estimated delivery, "
+                "Weight (kg), Volumetric weight (kg), Dimensions (cm), Quote token. "
+                "Mark rows with recommended=true with ★. "
+                "If insurance was requested and a rate did not apply it, show the insurance_note clearly. "
+                "End with: 'Which service would you like to proceed with?'"
             )
         else:
             text = (
@@ -83,38 +86,43 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
                 f"{'con' if str(insurance).lower() == 'true' else 'sin'} seguro. "
                 "Usa estos valores por defecto si no se especifican: ancho=30cm, alto=20cm, largo=15cm, "
                 "valor_paquete=500 MXN, paquetes=1, tipo_paquete=2 (paquete). "
-                "Llama a quote_shipment con esos valores y muéstrame las tarifas disponibles ordenadas por precio."
+                "Llama a quote_shipment y preséntame los resultados como una tabla numerada con columnas: "
+                "#, Paquetería, Servicio, Tipo, Costo total, Moneda, Días, Entrega estimada, "
+                "Peso (kg), Peso volumétrico (kg), Dimensiones (cm), Quote token. "
+                "Marca con ★ las tarifas con recommended=true. "
+                "Si pedí seguro y alguna tarifa no lo aplica, indícalo claramente en su fila (insurance_note). "
+                "Termina preguntando: '¿Con qué servicio deseas proceder?'"
             )
         return types.GetPromptResult(
             description="Cotización de envío / Shipment quote",
             messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
         )
 
-    if name == "quote_and_ship":
-        origin = args.get("origin_zip", "?")
-        dest = args.get("dest_zip", "?")
-        weight = args.get("weight_kg", "?")
-        insurance = args.get("insurance", "false")
+    if name == "ship":
+        token = args.get("quote_token", "?")
+        content = args.get("content", "Producto")
         if lang == "en":
             text = (
-                f"I need to ship a package from ZIP {origin} to ZIP {dest}, {weight} kg, "
-                f"insurance={'yes' if str(insurance).lower() == 'true' else 'no'}. "
-                "Step 1: call quote_shipment (defaults: 30×20×15 cm, value=500 MXN, packages=1, type=2). "
-                "Step 2: pick the cheapest rate and show me the quote_token and carrier. "
-                "Step 3: ask me for sender and recipient details, then call create_shipment. "
-                "Warn me this operation has a monetary cost before creating the shipment."
+                f"Create a shipment using quote token: {token}. "
+                f"Package contents: {content}. "
+                "If you don't have the following information in context, ask the user for it before calling create_shipment:\n"
+                "Sender: first name, last name, email, phone, street, number, neighborhood (colonia), municipality, state, ZIP code, address references.\n"
+                "Recipient: same fields.\n"
+                "⚠️ WARNING: this operation has a monetary cost. Confirm with the user before proceeding.\n"
+                "On success, respond with: guide number, carrier, estimated delivery date, and label download link."
             )
         else:
             text = (
-                f"Necesito enviar un paquete desde el código postal {origin} al {dest}, {weight} kg, "
-                f"{'con' if str(insurance).lower() == 'true' else 'sin'} seguro. "
-                "Paso 1: llama a quote_shipment (defaults: 30×20×15 cm, valor=500 MXN, paquetes=1, tipo=2). "
-                "Paso 2: elige la tarifa más económica y muéstrame el quote_token y la paquetería. "
-                "Paso 3: pídeme los datos de remitente y destinatario, luego llama a create_shipment. "
-                "Avísame que esta operación tiene costo monetario antes de crear el envío."
+                f"Crea un envío usando el token de cotización: {token}. "
+                f"Contenido del paquete: {content}. "
+                "Si no tienes la siguiente información en el contexto, pídela al usuario antes de llamar a create_shipment:\n"
+                "Remitente: nombre, apellido, email, teléfono, calle, número, colonia, municipio, estado, código postal, referencias.\n"
+                "Destinatario: los mismos campos.\n"
+                "⚠️ AVISO: esta operación tiene costo monetario. Confirma con el usuario antes de continuar.\n"
+                "Al éxito, responde con: número de guía, paquetería, fecha estimada de entrega y link de etiqueta."
             )
         return types.GetPromptResult(
-            description="Cotización y creación de envío / Quote and create shipment",
+            description="Creación de envío / Create shipment",
             messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
         )
 

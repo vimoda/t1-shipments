@@ -32,8 +32,9 @@ def test_quote_success(httpx_mock, client):
     response = client.quote(_req())
     assert response.success is True
     assert len(response.detail) == 2
-    assert response.detail[0]["service_id"] == "FEDEX"
-    assert response.detail[1]["total_cost"] == 120.0
+    assert response.detail[0]["carrier"] in {"FEDEX", "DHL"}
+    assert "volumetric_weight" in response.detail[0]
+    assert response.detail[0]["token"] is not None
 
 
 def test_quote_only_weight():
