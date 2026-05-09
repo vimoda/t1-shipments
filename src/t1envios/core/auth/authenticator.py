@@ -24,6 +24,7 @@ class Authenticator:
         endpoints: "Endpoints",
         http: httpx.Client,
         storage: TokenStorage | None = None,
+        auto_refresh: bool = True,
     ) -> None:
         self._client_id = client_id
         self._client_secret = client_secret
@@ -31,6 +32,7 @@ class Authenticator:
         self._http = http
         self._storage: TokenStorage = storage if storage is not None else InMemoryStorage()
         self._token: Token | None = None
+        self.auto_refresh = auto_refresh
 
     def login(self, username: str, password: str) -> Token:
         payload = {
@@ -92,10 +94,16 @@ class Authenticator:
         if self._token is None:
             raise SessionExpiredError("No active session. Run: t1 auth login")
 
-        if self._token.is_expired():
-            if self._token.refresh_token:
+        # With auto_refresh: proactive 60s buffer + automatic refresh on expiry.
+        # Without auto_refresh: only fail on actual expiry; caller manages refresh explicitly.
+        buffer = 60 if self.auto_refresh else 0
+        if self._token.is_expired(buffer_seconds=buffer):
+            if self.auto_refresh and self._token.refresh_token:
                 return self.refresh()
-            raise SessionExpiredError("Token expired. Run: t1 auth login")
+            raise SessionExpiredError(
+                "Token expired. "
+                + ("Run: t1 auth login" if self.auto_refresh else "Call auth_refresh to get new tokens.")
+            )
 
         return self._token
 

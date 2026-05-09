@@ -7,10 +7,11 @@ import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
+from ..core.auth.storage import InMemoryStorage
 from ..core.client import T1Client
-from ..core.exceptions import SessionExpiredError
 from . import prompts as prompts_module
 from . import resources as resources_module
+from .tools import auth as auth_tools
 from .tools import carriers as carriers_tools
 from .tools import shipments as shipment_tools
 
@@ -27,34 +28,31 @@ resources_module.register(server, lambda: _get_client())
 def _get_client() -> T1Client:
     global _CLIENT
     if _CLIENT is None:
-        _CLIENT = T1Client.from_settings()
-
-    # ensure_valid() refreshes transparently if token expires within 60s.
-    try:
-        _CLIENT._auth.ensure_valid()
-    except SessionExpiredError:
         from ..core.config import Settings
 
         s = Settings()  # type: ignore[call-arg]
+        # MCP server is always headless — InMemoryStorage avoids keychain popups.
+        _CLIENT = T1Client.from_settings(token_storage=InMemoryStorage(), auto_refresh=False)
+
+        # Auto-login if credentials are present in env — no need to call auth_login tool.
         if s.username and s.password:
             _CLIENT.login(s.username, s.password.get_secret_value())
-        else:
-            raise SessionExpiredError(
-                "No active session. Set T1_USERNAME and T1_PASSWORD env vars or run: t1 auth login"
-            )
+            _CLIENT._auth.auto_refresh = True
 
     return _CLIENT
 
 
 @server.list_tools()
 async def list_tools() -> list[types.Tool]:
-    return [carriers_tools.TOOL_DEF] + shipment_tools.ALL_TOOLS
+    return auth_tools.ALL_TOOLS + [carriers_tools.TOOL_DEF] + shipment_tools.ALL_TOOLS
 
 
 @server.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
     client = _get_client()
-    if name == carriers_tools.TOOL_DEF.name:
+    if name in {t.name for t in auth_tools.ALL_TOOLS}:
+        result = auth_tools.handle(name, arguments, client)
+    elif name == carriers_tools.TOOL_DEF.name:
         result = carriers_tools.handle(arguments, client)
     else:
         result = shipment_tools.handle(name, arguments, client)

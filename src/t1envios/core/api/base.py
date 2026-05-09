@@ -56,7 +56,7 @@ class BaseResource:
                 resp = self._http.send(req)
                 log.debug("→ %s", resp.status_code)
 
-                if resp.status_code == 401 and retry_on_401:
+                if resp.status_code == 401 and retry_on_401 and self._auth.auto_refresh:
                     log.warning("401 received, refreshing token and retrying")
                     token = self._auth.refresh()
                     headers["Authorization"] = f"Bearer {token.access_token}"

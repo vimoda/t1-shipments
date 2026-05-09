@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from types import TracebackType
 from typing import Any
 
@@ -13,6 +14,7 @@ from .api.shipments import ShipmentsResource
 from .api.tracking import TrackingResource
 from .auth.authenticator import Authenticator
 from .auth.storage import InMemoryStorage, TokenStorage
+from .auth.token import Token
 from .config import Endpoints
 from .models.quote import QuoteRequest, QuoteResponse
 from .models.shipment import Shipment, ShipmentRequest
@@ -35,6 +37,7 @@ class T1Client:
         commerce_id: str | None = None,
         log_level: str | None = None,
         retries: int = 3,
+        auto_refresh: bool = True,
     ) -> None:
         if log_level is not None:
             configure_logging(log_level)
@@ -47,6 +50,7 @@ class T1Client:
             endpoints=self._endpoints,
             http=self._http,
             storage=_storage,
+            auto_refresh=auto_refresh,
         )
         self._quotes = QuotesResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id, retries=retries)
         self._tracking = TrackingResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id, retries=retries)
@@ -55,8 +59,8 @@ class T1Client:
         self._carriers = CarriersResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id, retries=retries)
         self._shipments = ShipmentsResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id, retries=retries)
 
-    def login(self, username: str, password: str) -> None:
-        self._auth.login(username, password)
+    def login(self, username: str, password: str) -> Token:
+        return self._auth.login(username, password)
 
     def logout(self) -> None:
         self._auth.logout()
@@ -84,6 +88,25 @@ class T1Client:
 
     def download_label(self, guide_link: str) -> bytes:
         return self._shipments.download_label(guide_link)
+
+    def inject_token(
+        self,
+        access_token: str,
+        refresh_token: str | None = None,
+        expires_at: datetime | None = None,
+    ) -> None:
+        """Load an externally managed token (e.g. from MCP client).
+
+        Sets auto_refresh=True if refresh_token provided, False otherwise.
+        """
+        token = Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_at=expires_at or datetime(9999, 1, 1, tzinfo=timezone.utc),
+        )
+        self._auth._token = token
+        self._auth._storage.save(token)
+        self._auth.auto_refresh = refresh_token is not None
 
     def close(self) -> None:
         self._http.close()

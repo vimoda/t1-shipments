@@ -4,6 +4,7 @@ import pytest
 
 from t1envios.mcp import prompts as prompts_module
 from t1envios.mcp import resources as resources_module
+from t1envios.mcp.tools import auth as auth_tools_module
 
 from conftest import load_fixture
 
@@ -199,3 +200,110 @@ class TestNewShipmentTools:
         assert "track_detail" in names
         assert "download_label" in names
         assert len(st.ALL_TOOLS) == 7
+
+
+# ---------------------------------------------------------------------------
+# Auth tools tests
+# ---------------------------------------------------------------------------
+
+class TestAuthTools:
+    def test_auth_tools_listed(self):
+        names = {t.name for t in auth_tools_module.ALL_TOOLS}
+        assert names == {"auth_login", "auth_refresh", "auth_set_session"}
+
+    def test_auth_login(self, httpx_mock, client):
+        httpx_mock.add_response(
+            url="https://api.example.com/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token",
+            json=load_fixture("login"),
+        )
+        result = auth_tools_module.handle("auth_login", {"username": "u", "password": "p"}, client)
+        assert result["access_token"] == "test-access-token"
+        assert result["refresh_token"] == "test-refresh-token"
+        assert "expires_at" in result
+
+    def test_auth_set_session_with_refresh(self, client):
+        result = auth_tools_module.handle(
+            "auth_set_session",
+            {"access_token": "tok-abc", "refresh_token": "ref-xyz"},
+            client,
+        )
+        assert result["ok"] is True
+        assert result["auto_refresh"] is True
+        assert client._auth._token.access_token == "tok-abc"
+        assert client._auth._token.refresh_token == "ref-xyz"
+        assert client._auth.auto_refresh is True
+
+    def test_auth_set_session_access_only(self, client):
+        result = auth_tools_module.handle(
+            "auth_set_session",
+            {"access_token": "tok-abc"},
+            client,
+        )
+        assert result["auto_refresh"] is False
+        assert client._auth.auto_refresh is False
+
+    def test_auth_set_session_with_expires_at(self, client):
+        auth_tools_module.handle(
+            "auth_set_session",
+            {"access_token": "tok", "expires_at": "2030-01-01T00:00:00Z"},
+            client,
+        )
+        assert client._auth._token.expires_at.year == 2030
+
+    def test_auth_refresh(self, httpx_mock, client):
+        httpx_mock.add_response(
+            url="https://api.example.com/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token",
+            json={"access_token": "new-token", "refresh_token": "new-refresh", "expires_in": 3600},
+        )
+        result = auth_tools_module.handle("auth_refresh", {"refresh_token": "old-refresh"}, client)
+        assert result["access_token"] == "new-token"
+        assert result["refresh_token"] == "new-refresh"
+
+    def test_unknown_auth_tool_raises(self, client):
+        with pytest.raises(ValueError, match="Unknown auth tool"):
+            auth_tools_module.handle("nonexistent", {}, client)
+
+
+# ---------------------------------------------------------------------------
+# auto_refresh behavior tests
+# ---------------------------------------------------------------------------
+
+class TestAutoRefresh:
+    def test_inject_token_with_refresh_enables_auto_refresh(self, client):
+        client.inject_token("access", "refresh")
+        assert client._auth.auto_refresh is True
+
+    def test_inject_token_access_only_disables_auto_refresh(self, client):
+        client.inject_token("access")
+        assert client._auth.auto_refresh is False
+
+    def test_ensure_valid_no_auto_refresh_raises_on_expired(self, client):
+        from datetime import datetime, timezone
+        from t1envios.core.auth.token import Token
+        from t1envios.core.exceptions import SessionExpiredError
+
+        client._auth.auto_refresh = False
+        client._auth._token = Token(
+            access_token="expired",
+            refresh_token="has-refresh",  # has refresh but auto_refresh=False
+            expires_at=datetime(2000, 1, 1, tzinfo=timezone.utc),
+        )
+        with pytest.raises(SessionExpiredError):
+            client._auth.ensure_valid()
+
+    def test_ensure_valid_auto_refresh_true_refreshes(self, httpx_mock, client):
+        from datetime import datetime, timezone
+        from t1envios.core.auth.token import Token
+
+        client._auth.auto_refresh = True
+        client._auth._token = Token(
+            access_token="expired",
+            refresh_token="valid-refresh",
+            expires_at=datetime(2000, 1, 1, tzinfo=timezone.utc),
+        )
+        httpx_mock.add_response(
+            url="https://api.example.com/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token",
+            json={"access_token": "new-access", "refresh_token": "new-refresh", "expires_in": 3600},
+        )
+        token = client._auth.ensure_valid()
+        assert token.access_token == "new-access"
