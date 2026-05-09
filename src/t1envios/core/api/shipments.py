@@ -17,10 +17,12 @@ class ShipmentsResource(BaseResource):
             payload["comercio_id"] = self._shop_id
         data = self.request("POST", url, json=payload)
 
+        print(f"shipment:", data)
+
         if not isinstance(data, dict):
             raise ValueError(f"Expected dict response, got {type(data)}")
         if data.get("success") is False:
-            raise ValueError(f"API error: {data.get('message', 'Unknown error')}")
+            raise ValueError(f"API error: {data.get('message', 'Unknown error')} | raw: {data}")
         return Shipment.model_validate(data["detail"])
 
     def download_label(self, guide_link: str) -> bytes:

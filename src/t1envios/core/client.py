@@ -59,8 +59,8 @@ class T1Client:
         self._carriers = CarriersResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id, retries=retries)
         self._shipments = ShipmentsResource(self._http, self._auth, self._endpoints, shop_id=shop_id, commerce_id=commerce_id, retries=retries)
 
-    def login(self, username: str, password: str) -> Token:
-        return self._auth.login(username, password)
+    def login(self, username: str, password: str, store_id: str | None = None) -> Token:
+        return self._auth.login(username, password, store_id=store_id)
 
     def logout(self) -> None:
         self._auth.logout()

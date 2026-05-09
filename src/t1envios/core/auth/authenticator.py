@@ -34,7 +34,7 @@ class Authenticator:
         self._token: Token | None = None
         self.auto_refresh = auto_refresh
 
-    def login(self, username: str, password: str) -> Token:
+    def login(self, username: str, password: str, store_id: str | None = None) -> Token:
         payload = {
             "grant_type": "password",
             "client_id": self._client_id,
@@ -42,6 +42,8 @@ class Authenticator:
             "username": username,
             "password": password,
         }
+        if store_id:
+            payload["store_id"] = store_id
 
         log.debug("Logging in (grant_type=%s)", payload.get("grant_type"))
         resp = self._http.post(

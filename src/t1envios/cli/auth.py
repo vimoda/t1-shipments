@@ -19,6 +19,7 @@ app = typer.Typer(help="Authentication commands")
 def login(
     username: str = typer.Option(None, "--username", "-u", help="T1Envios username (or set T1_USERNAME)"),
     password: str = typer.Option(None, "--password", "-p", hide_input=True, help="T1Envios password (or set T1_PASSWORD)"),
+    store_id: str = typer.Option(None, "--store-id", help="Store ID to embed in token (or set T1_COMMERCE_ID)"),
 ) -> None:
     """Authenticate and persist tokens."""
     try:
@@ -26,6 +27,7 @@ def login(
 
         resolved_user = username or (s.username if s.username else None)
         resolved_pass = password or (s.password.get_secret_value() if s.password else None)
+        resolved_store = store_id or s.commerce_id
 
         if not resolved_user:
             resolved_user = typer.prompt("Username")
@@ -33,7 +35,7 @@ def login(
             resolved_pass = typer.prompt("Password", hide_input=True)
 
         client = T1Client.from_settings()
-        token = client.login(resolved_user, resolved_pass)
+        token = client.login(resolved_user, resolved_pass, store_id=resolved_store)
 
         remaining = (token.expires_at - datetime.now(tz=timezone.utc)).total_seconds()
         has_refresh = "✓" if token.refresh_token else "✗"

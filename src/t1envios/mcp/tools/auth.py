@@ -17,6 +17,7 @@ TOOL_AUTH_LOGIN = types.Tool(
         "properties": {
             "username": {"type": "string", "description": "T1Envios username / Usuario"},
             "password": {"type": "string", "description": "T1Envios password / Contraseña"},
+            "store_id": {"type": "string", "description": "Store ID to use (optional — overrides default store in token / ID de tienda a usar)"},
         },
         "required": ["username", "password"],
     },
@@ -73,7 +74,7 @@ ALL_TOOLS = [TOOL_AUTH_LOGIN, TOOL_AUTH_REFRESH, TOOL_AUTH_SET_SESSION]
 
 def handle(name: str, arguments: dict, client) -> dict:
     if name == "auth_login":
-        token = client.login(arguments["username"], arguments["password"])
+        token = client.login(arguments["username"], arguments["password"], store_id=arguments.get("store_id"))
         return {
             "access_token": token.access_token,
             "refresh_token": token.refresh_token,

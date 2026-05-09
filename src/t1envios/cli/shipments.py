@@ -155,7 +155,11 @@ def run_create_shipment(
         with T1Client.from_settings() as client:
             shipment = client.create_shipment(req)
     except T1Error as exc:
-        rprint(f"[red]Error:[/red] {exc}")
+        from ..core.exceptions import ApiError
+        if isinstance(exc, ApiError) and exc.payload:
+            rprint(f"[red]Error:[/red] {exc}\n[dim]Raw:[/dim] {exc.payload}")
+        else:
+            rprint(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
 
     rprint("[green]Guía creada.[/green]")

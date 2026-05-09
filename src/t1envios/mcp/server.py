@@ -36,7 +36,7 @@ def _get_client() -> T1Client:
 
         # Auto-login if credentials are present in env — no need to call auth_login tool.
         if s.username and s.password:
-            _CLIENT.login(s.username, s.password.get_secret_value())
+            _CLIENT.login(s.username, s.password.get_secret_value(), store_id=s.commerce_id)
             _CLIENT._auth.auto_refresh = True
 
     return _CLIENT

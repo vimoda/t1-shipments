@@ -77,13 +77,14 @@ def test_quote_cmd(mock_cls):
 def test_auth_login(mock_settings_cls, mock_cls):
     mock_settings_cls.return_value.username = None
     mock_settings_cls.return_value.password = None
+    mock_settings_cls.return_value.commerce_id = None
     mock_client = MagicMock()
     mock_cls.from_settings.return_value = mock_client
     mock_client.login.return_value.refresh_token = "ref"
     mock_client.login.return_value.expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=1)
     result = runner.invoke(app, ["auth", "login"], input="user@example.com\nsecret123\n")
     assert result.exit_code == 0
-    mock_client.login.assert_called_once_with("user@example.com", "secret123")
+    mock_client.login.assert_called_once_with("user@example.com", "secret123", store_id=None)
 
 
 @patch("t1envios.cli.auth.HybridStorage")
