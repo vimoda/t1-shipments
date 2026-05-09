@@ -57,9 +57,10 @@ TOOL_QUOTE = types.Tool(
         "Always call this BEFORE create_shipment — quote_token from the selected rate is required. "
         "Dimension defaults if omitted: width=30cm, height=20cm, length=15cm, "
         "package_value=500 MXN, packages=1, package_type=2 (parcel). "
-        "Respond with a table or list: carrier, service, total cost, days. "
-        "If insurance was requested, show base cost + insurance cost + total separately per rate. "
-        "End with: '¿Con cuál paquetería deseas proceder?'"
+        "Respond with a numbered table. Columns: #, Paquetería, Servicio, Costo total, Días, Tipo, Dimensiones (cm), Peso real (kg), Peso volumétrico (kg). "
+        "If volumetric weight was calculated (dimensions provided), show it in the last column; otherwise show '—'. "
+        "If insurance was requested, add a sub-row or note per rate: base + seguro + total. "
+        "End with: '¿Con qué servicio deseas proceder?'"
     ),
     inputSchema={
         "type": "object",
