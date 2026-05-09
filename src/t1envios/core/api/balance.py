@@ -11,12 +11,10 @@ class BalanceResource(BaseResource):
 
         if not isinstance(data, dict):
             raise ValueError(f"Expected dict response, got {type(data)}")
-        if data.get("success") is False:
-            raise ValueError(f"API error: {data.get('message', 'Unknown error')}")
 
         detail = data.get("detail")
-        if not detail:
-            raise ValueError("No 'detail' field in response")
+        if not detail or not isinstance(detail, dict):
+            raise ValueError(data.get("message") or "No 'detail' field in response")
 
         return Balance.model_validate({
             "amount": detail.get("monto_actual", 0.0),
