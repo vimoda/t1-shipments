@@ -8,7 +8,7 @@ from mcp.server import Server
 
 _PROMPTS: list[types.Prompt] = [
     types.Prompt(
-        name="quote_simple",
+        name="quote",
         description="Cotiza envío / Quote shipment between two ZIP codes with sensible defaults",
         arguments=[
             types.PromptArgument(name="origin_zip", description="Código postal origen / Origin ZIP", required=True),
