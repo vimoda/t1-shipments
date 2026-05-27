@@ -49,15 +49,18 @@ async def list_tools() -> list[types.Tool]:
 
 @server.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
-    client = _get_client()
-    if name in {t.name for t in auth_tools.ALL_TOOLS}:
-        result = auth_tools.handle(name, arguments, client)
-    elif name == carriers_tools.TOOL_DEF.name:
-        result = carriers_tools.handle(arguments, client)
-    else:
-        result = shipment_tools.handle(name, arguments, client)
+    try:
+        client = _get_client()
+        if name in {t.name for t in auth_tools.ALL_TOOLS}:
+            result = auth_tools.handle(name, arguments, client)
+        elif name == carriers_tools.TOOL_DEF.name:
+            result = carriers_tools.handle(arguments, client)
+        else:
+            result = shipment_tools.handle(name, arguments, client)
 
-    return [types.TextContent(type="text", text=json.dumps(result, default=str))]
+        return [types.TextContent(type="text", text=json.dumps(result, default=str))]
+    except Exception as e:
+        return [types.TextContent(type="text", text=json.dumps({"success": False, "error": str(e)}))]
 
 
 def main() -> None:
