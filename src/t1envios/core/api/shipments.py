@@ -15,9 +15,8 @@ class ShipmentsResource(BaseResource):
         payload = req.model_dump()
         if self._shop_id:
             payload["comercio_id"] = self._shop_id
+        log.debug("create_shipment payload: %s", payload)
         data = self.request("POST", url, json=payload)
-
-        print(f"shipment:", data)
 
         if not isinstance(data, dict):
             raise ValueError(f"Expected dict response, got {type(data)}")

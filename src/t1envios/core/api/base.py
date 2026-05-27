@@ -69,6 +69,8 @@ class BaseResource:
                 req = self._http.build_request(method, url, headers=headers, **kwargs)
                 resp = self._http.send(req)
                 log.debug("→ %s", resp.status_code)
+                if log.isEnabledFor(logging.DEBUG) and resp.content:
+                    log.debug("← body: %s", resp.text[:2000])
 
                 if resp.status_code == 401 and retry_on_401 and self._auth.auto_refresh:
                     log.warning("401 received, refreshing token and retrying")
@@ -87,7 +89,7 @@ class BaseResource:
                 self._raise_for_status(resp)
                 return resp.json() if resp.content else None
 
-            except (httpx.TimeoutException, httpx.ConnectError) as exc:
+            except (httpx.TimeoutException, httpx.ConnectError, httpx.RemoteProtocolError) as exc:
                 if attempt < self._retries - 1:
                     delay = self._retry_delay * (2**attempt)
                     log.warning("%s on attempt %d, retrying in %.1fs", type(exc).__name__, attempt + 1, delay)

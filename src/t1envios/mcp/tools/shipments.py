@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import httpx
 import mcp.types as types
+from pydantic import ValidationError
 
+from ...core.exceptions import ApiError
 from ...core.models.quote import QuoteRequest, QuoteResponse
 from ...core.models.shipment import ShipmentRequest
 from ...core.models.tracking import PickupRequest
@@ -50,35 +53,49 @@ TOOL_TRACK_DETAIL = types.Tool(
 TOOL_QUOTE = types.Tool(
     name="quote_shipment",
     description=(
+        "ANTES de cotizar, revisá tu memoria por direcciones guardadas. "
+        "- Si existen ORIGEN y DESTINO guardados: preguntá '¿Querés usar [origen] → [destino], "
+        "cambiar solo el origen, cambiar solo el destino, o dar ambos nuevos?' "
+        "- Si solo existe ORIGEN: 'Tengo guardado [origen]. ¿Lo usamos o ponemos otro? Y decime el destino.' "
+        "- Si solo existe DESTINO: 'Tengo guardado [destino]. ¿Lo usamos o ponemos otro? Y decime el origen.' "
+        "- Si no hay nada: seguí normal pidiendo CPs. "
         "Get available shipping rates / Cotiza tarifas de envío. "
+        "Requires weight, dimensions (width/height/length), and origin/destination ZIP codes. "
+        "Calculate the volumetric weight = ceil(width × height × length / 5000). "
+        "All weights are rounded UP to the nearest integer. "
+        "Use the LARGER of the physical weight and the volumetric weight as the weight parameter. "
         "Returns a list sorted cheapest-first; rows with recommended=true appear first. "
         "Each rate exposes: quote_token, carrier, service, service_type, base_cost, total_cost, "
         "currency, estimated_days, delivery_date, weight_kg, volumetric_weight_kg, "
         "dimensions_cm {length,width,height}, package_value, packages, insurance_applied, recommended. "
-        "When insurance_requested=true: if insurance_applied=true and base_cost differs from total_cost, "
+        "When insurance=true: if insurance_applied=true and base_cost differs from total_cost, "
         "the rate also includes insurance_cost (= total_cost - base_cost). "
         "If insurance_applied=false, the rate includes insurance_note explaining insurance was not applied. "
+        "package_value is only needed when insurance=true — otherwise omit it. "
         "Always call this BEFORE create_shipment — quote_token is required to ship. "
         "Dimension defaults if omitted: width=30cm, height=20cm, length=15cm, "
         "package_value=500 MXN, packages=1, package_type=2 (parcel). "
-        "Respond with a numbered table. Columns: #, Carrier, Service, Type, Total cost, Currency, "
+        "Respond with a numbered table. Columns: #, Carrier, Service, Type, Guide cost, Insurance cost, Total, Currency, "
         "Days, Estimated delivery, Weight (kg), Volumetric weight (kg), Dimensions (cm), Quote token. "
         "Highlight rows with recommended=true with ★. "
-        "If insurance was requested, append '+ insurance_cost = total' per row where insurance_applied=true; "
-        "mark insurance_note rows clearly. "
-        "End with: '¿Con qué servicio deseas proceder?'"
+        "When insurance=true and insurance_applied=true: Guide cost = base_cost, Insurance cost = insurance_cost, Total = total_cost. "
+        "When insurance=false or insurance_applied=false: Guide cost = total_cost, Insurance cost = '—', Total = total_cost. "
+        "Also show insurance_note clearly when insurance_applied=false. "
+        "In your response, clarify which weight was used (physical vs volumetric) and its rounded integer value. "
+        "End with: '¿Con qué servicio deseas proceder?' "
+        "Respondé en el mismo idioma que el usuario está usando."
     ),
     inputSchema={
         "type": "object",
         "properties": {
             "origin_postal_code": {"type": "string", "description": "5-digit Mexican origin ZIP code / CP origen (5 dígitos)"},
             "destination_postal_code": {"type": "string", "description": "5-digit Mexican destination ZIP code / CP destino (5 dígitos)"},
-            "weight": {"type": "number", "description": "Weight in kg / Peso en kg"},
+            "weight": {"type": "number", "description": "Weight in kg. Use the LARGER of physical weight and volumetric weight (ceil(W×H×L/5000)), rounded UP to integer. / Peso en kg. Usá el MAYOR entre peso físico y volumétrico (ceil(W×AL×L/5000)), redondeado hacia arriba."},
             "width": {"type": "number", "description": "Width in cm (default 30) / Ancho en cm (default 30)"},
             "height": {"type": "number", "description": "Height in cm (default 20) / Alto en cm (default 20)"},
             "length": {"type": "number", "description": "Length in cm (default 15) / Largo en cm (default 15)"},
             "shipping_days": {"type": "integer", "description": "Days until shipment / Días hasta envío"},
-            "package_value": {"type": "number", "description": "Declared value in MXN (default 500) / Valor declarado en MXN (default 500)"},
+            "package_value": {"type": "number", "description": "Declared value in MXN (only required when insurance=true) / Valor declarado en MXN (solo requerido si insurance=true)"},
             "insurance": {"type": "boolean", "description": "Include insurance / Incluir seguro"},
             "packages": {"type": "integer", "description": "Number of packages (default 1) / Número de paquetes (default 1)"},
             "package_type": {"type": "integer", "description": "1=Envelope/Sobre, 2=Parcel/Paquete (default 2)"},
@@ -96,6 +113,15 @@ TOOL_CREATE_SHIPMENT = types.Tool(
         "Create a shipment and generate a shipping guide / Crea un envío y genera la guía. "
         "Requires a quote_token from quote_shipment. "
         "Flow: quote_shipment → select rate → create_shipment. "
+        "ANTES de llamar este tool, revisá tu memoria por direcciones guardadas. "
+        "- Si existen ORIGEN y DESTINO guardados: preguntá '¿Querés usar [origen] → [destino], "
+        "cambiar solo el origen, cambiar solo el destino, o dar ambos nuevos?' "
+        "- Si solo existe ORIGEN: 'Tengo guardado [origen]. ¿Lo usamos o ponemos otro? Y decime el destino.' "
+        "- Si solo existe DESTINO: 'Tengo guardado [destino]. ¿Lo usamos o ponemos otro? Y decime el origen.' "
+        "- Si no hay nada: seguí normal pidiendo datos. "
+        "DESPUÉS de crear la guía exitosamente, revisá tu memoria para ver si esas direcciones ya están guardadas. "
+        "- Si ya existen: decí 'Las direcciones ya las tengo guardadas.' "
+        "- Si no existen: preguntale al usuario '¿Querés guardar las direcciones para usarlas después?' "
         "If the origin ZIP has multiple neighborhoods, ask the user which one applies before calling. "
         "On success respond with: guide number, carrier, estimated delivery date, and label download link. "
         "One sentence each. No JSON, no raw data."
@@ -114,9 +140,8 @@ TOOL_CREATE_SHIPMENT = types.Tool(
             "origin_phone": {"type": "string", "description": "Sender phone / Teléfono del remitente"},
             "origin_state": {"type": "string", "description": "Sender state / Estado del remitente"},
             "origin_municipality": {"type": "string", "description": "Sender municipality / Municipio del remitente"},
-            "origin_references": {"type": "string", "description": "Address references / Referencias de la dirección"},
+            "origin_references": {"type": "string", "description": "Address references (optional, send '' if not provided) / Referencias (opcional, mandá '' si no hay)"},
             "origin_postal_code": {"type": "string", "description": "Sender 5-digit ZIP / CP del remitente"},
-            "origin_commerce_name": {"type": "string", "description": "Sender business name (optional) / Nombre comercial (opcional)"},
             "destination_first_name": {"type": "string", "description": "Recipient first name / Nombre del destinatario"},
             "destination_last_name": {"type": "string", "description": "Recipient last name / Apellido del destinatario"},
             "destination_email": {"type": "string", "description": "Recipient email / Correo del destinatario"},
@@ -126,24 +151,20 @@ TOOL_CREATE_SHIPMENT = types.Tool(
             "destination_phone": {"type": "string", "description": "Recipient phone / Teléfono del destinatario"},
             "destination_state": {"type": "string", "description": "Recipient state / Estado del destinatario"},
             "destination_municipality": {"type": "string", "description": "Recipient municipality / Municipio del destinatario"},
-            "destination_references": {"type": "string", "description": "Address references / Referencias"},
+            "destination_references": {"type": "string", "description": "Address references (optional, send '' if not provided) / Referencias (opcional, mandá '' si no hay)"},
             "destination_postal_code": {"type": "string", "description": "Recipient 5-digit ZIP / CP del destinatario"},
-            "destination_commerce_name": {"type": "string", "description": "Recipient business name (optional) / Nombre comercial (opcional)"},
             "packages": {"type": "integer", "description": "Number of packages / Número de paquetes"},
-            "generate_pickup": {"type": "boolean", "description": "Auto-schedule pickup / Programar recolección automática"},
-            "has_notification": {"type": "boolean", "description": "Send tracking notification / Enviar notificación de rastreo"},
-            "guide_origin": {"type": "string", "description": "Guide origin label / Etiqueta de origen de guía"},
         },
         "required": [
             "quote_token", "content",
             "origin_first_name", "origin_last_name", "origin_email",
             "origin_street", "origin_number", "origin_neighborhood",
             "origin_phone", "origin_state", "origin_municipality",
-            "origin_references", "origin_postal_code",
+            "origin_postal_code",
             "destination_first_name", "destination_last_name", "destination_email",
             "destination_street", "destination_number", "destination_neighborhood",
             "destination_phone", "destination_state", "destination_municipality",
-            "destination_references", "destination_postal_code",
+            "destination_postal_code",
             "packages",
         ],
     },
@@ -218,27 +239,35 @@ ALL_TOOLS = [
 
 
 def handle(name: str, arguments: dict, client) -> dict:
-    if name == "get_balance":
-        return client.balance().model_dump()
-    if name == "track_guide":
-        return client.track_state(arguments["guide"]).model_dump()
-    if name == "track_detail":
-        return client.track_detail(arguments["guide"]).model_dump()
-    if name == "quote_shipment":
-        req = QuoteRequest(**arguments)
-        resp = client.quote(req)
-        return _normalize_quote(resp, insurance_requested=arguments.get("insurance", False))
-    if name == "create_shipment":
-        req = ShipmentRequest(**arguments)
-        return client.create_shipment(req).model_dump()
-    if name == "download_label":
-        pdf_bytes = client.download_label(arguments["guide_link"])
-        import base64
-        return {"content_type": "application/pdf", "data_base64": base64.b64encode(pdf_bytes).decode()}
-    if name == "schedule_pickup":
-        req = PickupRequest(**arguments)
-        return client.schedule_pickup(req).model_dump()
-    raise ValueError(f"Unknown tool: {name}")
+    arguments = {k: v for k, v in arguments.items() if v is not None}
+    try:
+        if name == "get_balance":
+            return client.balance().model_dump()
+        if name == "track_guide":
+            return client.track_state(arguments["guide"]).model_dump()
+        if name == "track_detail":
+            return client.track_detail(arguments["guide"]).model_dump()
+        if name == "quote_shipment":
+            req = QuoteRequest(**arguments)
+            resp = client.quote(req)
+            return _normalize_quote(resp, insurance_requested=arguments.get("insurance", False))
+        if name == "create_shipment":
+            req = ShipmentRequest(**arguments)
+            return client.create_shipment(req).model_dump()
+        if name == "download_label":
+            pdf_bytes = client.download_label(arguments["guide_link"])
+            import base64
+            return {"content_type": "application/pdf", "data_base64": base64.b64encode(pdf_bytes).decode()}
+        if name == "schedule_pickup":
+            req = PickupRequest(**arguments)
+            return client.schedule_pickup(req).model_dump()
+        raise ValueError(f"Unknown tool: {name}")
+    except ValidationError as e:
+        return {"success": False, "error": f"Validation error: {e.errors()}"}
+    except ApiError as e:
+        return {"success": False, "error": str(e)}
+    except (httpx.RemoteProtocolError, httpx.ConnectError, httpx.TimeoutException) as e:
+        return {"success": False, "error": f"Connection error: {e}"}
 
 
 def _normalize_quote(resp: QuoteResponse, *, insurance_requested: bool) -> dict:
