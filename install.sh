@@ -70,6 +70,17 @@ install_mcp() {
     mcp_json
 }
 
+install_core() {
+    ensure_uv
+    info "Instalando t1-shipments-core desde GitHub…"
+    uv tool install --from "git+$GITHUB#subdirectory=packages/core" t1-shipments-core
+    ok "t1-shipments-core instalado"
+    echo ""
+    echo "───────────────────────────────────────────────────────────"
+    echo "  Uso: from t1shipments.core.client import T1Client"
+    echo "───────────────────────────────────────────────────────────"
+}
+
 install_cli() {
     ensure_uv
     info "Instalando t1-shipments-cli desde GitHub…"
@@ -82,6 +93,8 @@ install_cli() {
 }
 
 install_all() {
+    install_core
+    echo ""
     install_cli
     echo ""
     install_mcp
@@ -90,24 +103,27 @@ install_all() {
 # ── menu interactivo ────────────────────────────────────────────────────
 menu() {
     echo "¿Qué paquete deseas instalar?"
-    echo "  1) t1-shipments-cli  — CLI de terminal"
-    echo "  2) t1-shipments-mcp  — Servidor MCP para agentes de IA"
-    echo "  3) Ambos"
+    echo "  1) t1-shipments-core  — SDK programático"
+    echo "  2) t1-shipments-cli   — CLI de terminal"
+    echo "  3) t1-shipments-mcp   — Servidor MCP para agentes de IA"
+    echo "  4) Todos"
     echo ""
-    read -rp "Opción [1-3]: " choice </dev/tty
+    read -rp "Opción [1-4]: " choice </dev/tty
     case "$choice" in
-        1) install_cli ;;
-        2) install_mcp ;;
-        3) install_all ;;
+        1) install_core ;;
+        2) install_cli ;;
+        3) install_mcp ;;
+        4) install_all ;;
         *) die "Opción inválida: $choice" ;;
     esac
 }
 
 # ── main ─────────────────────────────────────────────────────────────────
 case "${1:-}" in
+    core) install_core ;;
     cli) install_cli ;;
     mcp) install_mcp ;;
     all) install_all ;;
     "")  menu ;;
-    *)   die "Uso: $0 {cli|mcp|all}" ;;
+    *)   die "Uso: $0 {core|cli|mcp|all}" ;;
 esac

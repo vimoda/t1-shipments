@@ -6,8 +6,6 @@ Python SDK, CLI, and MCP Server for the [T1Envios](https://t1envios.com) API. Qu
 
 [Leer en español](README.es.md)
 
-## Tools / Features
-
 | Tool | Package | Description |
 |------|---------|-------------|
 | SDK (`T1Client`) | `t1-shipments-core` | Programmatic Python SDK |
@@ -16,246 +14,30 @@ Python SDK, CLI, and MCP Server for the [T1Envios](https://t1envios.com) API. Qu
 
 ---
 
-## Installation options
+## SDK (`t1-shipments-core`)
 
-### Option 1 — uvx from GitHub (recommended, no cloning)
+The SDK provides `T1Client` for programmatic access to the T1Envios API.
 
-```bash
-# Run directly (no install needed)
-uvx --from "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp" t1shipments-mcp
-```
-
-MCP client configuration:
-
-```json
-{
-  "mcpServers": {
-    "t1shipments": {
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp",
-        "t1shipments-mcp"
-      ],
-      "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
-        "T1_USERNAME":      "${T1_USERNAME}",
-        "T1_PASSWORD":      "${T1_PASSWORD}",
-        "T1_ENV":           "dev",
-        "T1_SHOP_ID":       "${T1_SHOP_ID}",
-        "T1_COMERCE_ID":    "${T1_COMERCE_ID}",
-        "T1_LOG_LEVEL":     "DEBUG"
-      }
-    }
-  }
-}
-```
-
-Point to a specific tag / commit / branch:
-
-```json
-"args": ["--from", "git+https://github.com/vimoda/t1-shipments@v0.1.0#subdirectory=packages/mcp", "t1shipments-mcp"]
-```
-
----
-
-### Option 2 — From source code (clone the repo)
+### Installation
 
 ```bash
+# From GitHub (no clone needed)
+pip install "t1-shipments-core @ git+https://github.com/vimoda/t1-shipments#subdirectory=packages/core"
+
+# From PyPI (when published)
+pip install t1-shipments-core
+uv add t1-shipments-core
+
+# From install.sh
+curl -fsSL https://raw.githubusercontent.com/vimoda/t1-shipments/main/install.sh | bash -s core
+
+# From source (clone)
 git clone https://github.com/vimoda/t1-shipments
 cd t1-shipments
-uv sync                # installs everything in the workspace
+uv sync
 ```
 
-MCP client configuration:
-
-```json
-{
-  "mcpServers": {
-    "t1shipments": {
-      "command": "uv",
-      "args": [
-        "--directory",
-        "/path/to/t1-shipments",
-        "run",
-        "python",
-        "-m",
-        "t1shipments.mcp.server"
-      ],
-      "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
-        "T1_USERNAME":      "${T1_USERNAME}",
-        "T1_PASSWORD":      "${T1_PASSWORD}",
-        "T1_ENV":           "dev",
-        "T1_SHOP_ID":       "${T1_SHOP_ID}",
-        "T1_COMERCE_ID":    "${T1_COMERCE_ID}",
-        "T1_LOG_LEVEL":     "DEBUG"
-      }
-    }
-  }
-}
-```
-
----
-
-### Option 3 — pip install from GitHub (without uv)
-
-```bash
-# SDK
-pip install "t1-shipments-core @ git+https://github.com/vimoda/t1-shipments#subdirectory=packages/core"
-# CLI
-pip install "t1-shipments-cli @ git+https://github.com/vimoda/t1-shipments#subdirectory=packages/cli"
-# MCP server
-pip install "t1-shipments-mcp @ git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp"
-```
-
-After installing the MCP package:
-
-```json
-{
-  "mcpServers": {
-    "t1shipments": {
-      "command": "t1shipments-mcp",
-      "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
-        "T1_USERNAME":      "${T1_USERNAME}",
-        "T1_PASSWORD":      "${T1_PASSWORD}",
-        "T1_ENV":           "dev",
-        "T1_SHOP_ID":       "${T1_SHOP_ID}",
-        "T1_COMERCE_ID":    "${T1_COMERCE_ID}",
-        "T1_LOG_LEVEL":     "DEBUG"
-      }
-    }
-  }
-}
-```
-
----
-
-### Option 4 — Automated script
-
-```bash
-# MCP server only
-curl -fsSL https://raw.githubusercontent.com/vimoda/t1-shipments/main/install.sh | bash -s mcp
-
-# CLI only
-curl -fsSL https://raw.githubusercontent.com/vimoda/t1-shipments/main/install.sh | bash -s cli
-
-# Both
-curl -fsSL https://raw.githubusercontent.com/vimoda/t1-shipments/main/install.sh | bash -s all
-```
-
----
-
-### Option 5 — From PyPI (when published)
-
-```bash
-pip install t1-shipments-cli
-uv add t1-shipments-cli
-```
-
-MCP client (pointing directly to installed binary):
-
-```json
-{
-  "mcpServers": {
-    "t1shipments": {
-      "command": "t1shipments-mcp",
-      "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
-        "T1_USERNAME":      "${T1_USERNAME}",
-        "T1_PASSWORD":      "${T1_PASSWORD}",
-        "T1_ENV":           "dev",
-        "T1_SHOP_ID":       "${T1_SHOP_ID}",
-        "T1_COMERCE_ID":    "${T1_COMERCE_ID}",
-        "T1_LOG_LEVEL":     "DEBUG"
-      }
-    }
-  }
-}
-```
-
----
-
-### Config file locations
-
-| Client | Config file |
-|--------|-------------|
-| Claude Desktop (macOS) | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| Claude Desktop (Windows) | `%APPDATA%\Claude\claude_desktop_config.json` |
-| Claude Code | `.claude/mcp_config.json` in your project |
-
-### Test the installation
-
-```bash
-# With MCP Inspector (interactive UI)
-npx @modelcontextprotocol/inspector uvx --from "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp" t1shipments-mcp
-
-# Or if installed locally
-npx @modelcontextprotocol/inspector t1shipments-mcp
-```
-
----
-
-## Configuration
-
-Set environment variables (or use a `.env` file):
-
-```env
-T1_CLIENT_ID=your_client_id
-T1_CLIENT_SECRET=your_client_secret
-T1_BASE_URL=https://api.t1envios.com
-T1_SHOP_ID=your_shop_id
-```
-
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `T1_CLIENT_ID` | Yes | — | Keycloak client ID |
-| `T1_CLIENT_SECRET` | Yes | — | Keycloak client secret |
-| `T1_BASE_URL` | No | `https://api.t1envios.com` | API base URL |
-| `T1_SHOP_ID` | No | — | Commerce ID — sent as `comercio_id` on every request |
-| `T1_USERNAME` | No | — | T1Envios account email (auto-login in MCP) |
-| `T1_PASSWORD` | No | — | T1Envios account password |
-| `T1_ENV` | No | `dev` | `dev` or `prod` |
-| `T1_COMERCE_ID` | No | — | Internal commerce identifier |
-| `T1_LOG_LEVEL` | No | — | Logging level (e.g., `DEBUG`) |
-| `T1_TIMEOUT` | No | `30.0` | HTTP timeout in seconds |
-
----
-
-## Quick Start
-
-### SDK
-```python
-from t1shipments.core.client import T1Client
-
-with T1Client(client_id="...", client_secret="...") as client:
-    client.login("username", "password")
-    balance = client.balance()
-    print(f"Balance: {balance.amount} {balance.currency}")
-```
-
-### CLI
-```bash
-t1 auth login          # Prompt for credentials
-t1 quote --from-zip 02719 --to-zip 40900 --weight 1
-t1 balance
-```
-
-### MCP
-```bash
-t1 mcp run
-```
-
----
-
-## SDK Usage
-
-All public types are importable from their respective subpackages:
+### Usage
 
 ```python
 from t1shipments.core.client import T1Client
@@ -264,14 +46,12 @@ from t1shipments.core.models.shipment import ShipmentRequest
 from t1shipments.core.models.balance import Balance
 from t1shipments.core.models.carrier import Carrier
 from t1shipments.core.models.tracking import TrackingResponse, TrackingState
-from t1shipments.core.exceptions import SessionExpiredError, ApiError
+from t1shipments.core.exceptions import SessionExpiredError, ApiError, InsufficientBalanceError
 ```
 
-### Authentication
+#### Authentication
 
 ```python
-from t1shipments.core.client import T1Client
-
 # Login with username and password (required for all operations)
 client = T1Client(client_id="...", client_secret="...")
 client.login("username", "password")
@@ -282,13 +62,9 @@ with T1Client(client_id="...", client_secret="...") as client:
     # ... use client
 ```
 
-### Quote and Create Shipment
+#### Quote and Create Shipment
 
 ```python
-from t1shipments.core.client import T1Client
-from t1shipments.core.models.quote import QuoteRequest
-from t1shipments.core.models.shipment import ShipmentRequest
-
 with T1Client(client_id="...", client_secret="...", shop_id="...") as client:
     client.login("username", "password")
 
@@ -345,11 +121,9 @@ with T1Client(client_id="...", client_secret="...", shop_id="...") as client:
         f.write(pdf)
 ```
 
-### Tracking
+#### Tracking
 
 ```python
-from t1shipments.core.client import T1Client
-
 with T1Client(client_id="...", client_secret="...") as client:
     client.login("username", "password")
 
@@ -364,11 +138,9 @@ with T1Client(client_id="...", client_secret="...") as client:
     print(detail.detail)
 ```
 
-### Balance and Carriers
+#### Balance and Carriers
 
 ```python
-from t1shipments.core.client import T1Client
-
 with T1Client(client_id="...", client_secret="...") as client:
     client.login("username", "password")
 
@@ -380,12 +152,11 @@ with T1Client(client_id="...", client_secret="...") as client:
         print(c.name, c.services)
 ```
 
-### Schedule Pickup
+#### Schedule Pickup
 
 > The origin address must be registered in T1Envios before scheduling a pickup.
 
 ```python
-from t1shipments.core.client import T1Client
 from t1shipments.core.models.tracking import PickupRequest
 
 with T1Client(client_id="...", client_secret="...") as client:
@@ -416,12 +187,11 @@ with T1Client(client_id="...", client_secret="...") as client:
     print(f"Pickup scheduled: {pickup}")
 ```
 
-### Token Storage
+#### Token Storage
 
 By default `T1Client` uses in-memory storage (token is lost when the process exits). For persistent sessions use `HybridStorage`, which tries `keyring` first and falls back to `~/.t1shipments/credentials.json`:
 
 ```python
-from t1shipments.core.client import T1Client
 from t1shipments.core.auth.storage import HybridStorage, InMemoryStorage
 
 # Persistent (default for CLI)
@@ -431,21 +201,18 @@ client = T1Client(..., token_storage=HybridStorage())
 client = T1Client(..., token_storage=InMemoryStorage())
 ```
 
-### Load Config from Environment
+#### Load Config from Environment
 
 ```python
-from t1shipments.core.client import T1Client
-
 # Reads T1_CLIENT_ID, T1_CLIENT_SECRET, T1_SHOP_ID, etc. from env / .env
 with T1Client.from_settings() as client:
     client.login("username", "password")
     print(client.balance())
 ```
 
-### Exception Handling
+#### Exception Handling
 
 ```python
-from t1shipments.core.client import T1Client
 from t1shipments.core.exceptions import SessionExpiredError, ApiError, InsufficientBalanceError
 
 with T1Client(client_id="...", client_secret="...") as client:
@@ -480,28 +247,48 @@ T1Error
 
 ---
 
-## CLI Usage
+## CLI (`t1-shipments-cli`)
 
-### Authentication
+The CLI provides `t1` commands for terminal-based interaction with T1Envios.
+
+### Installation
 
 ```bash
+# From GitHub (no clone needed)
+pip install "t1-shipments-cli @ git+https://github.com/vimoda/t1-shipments#subdirectory=packages/cli"
+
+# From PyPI (when published)
+pip install t1-shipments-cli
+uv tool install t1-shipments-cli
+
+# Run without installing (via uvx)
+uvx --from "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/cli" t1 --help
+
+# From install.sh
+curl -fsSL https://raw.githubusercontent.com/vimoda/t1-shipments/main/install.sh | bash -s cli
+
+# From source (clone)
+git clone https://github.com/vimoda/t1-shipments
+cd t1-shipments
+uv sync
+uv run t1 --help
+```
+
+### Usage
+
+```bash
+# Authentication
 t1 auth login      # Prompt for username and password
 t1 auth logout     # Clear stored token
 t1 auth status     # Show current token status
-```
 
-### Quote
-
-```bash
+# Quote
 t1 quote \
   --from-zip 02719 --to-zip 40900 \
   --weight 1 --width 10 --height 10 --length 10 \
   --package-value 500 --packages 1
-```
 
-### Create Shipment
-
-```bash
+# Create Shipment
 t1 create-shipment \
   --quote-id <TOKEN_FROM_QUOTE> \
   --content "Ropa" \
@@ -521,26 +308,15 @@ t1 create-shipment \
   --destination-state "Guerrero" --destination-municipality "Chilpancingo de los Bravo" \
   --destination-references "Edificio blanco esquina" \
   --destination-zip-code 40900
-```
 
-### Download Label
-
-```bash
+# Download Label
 t1 label --guide-link "https://..." --output label.pdf
-```
 
-### Track Shipment
-
-```bash
+# Track Shipment
 t1 trackstate  --guide 1373188795   # Current status + history
 t1 trackdetail --guide 1373188795   # Full carrier detail
-```
 
-### Schedule Pickup
-
-> The origin address must be registered in T1Envios before scheduling a pickup.
-
-```bash
+# Schedule Pickup
 t1 pickup \
   --carrier DHL \
   --contact-name "Juan" --contact-last-name "Pérez" \
@@ -555,21 +331,150 @@ t1 pickup \
   --length 30 --width 20 --height 15 \
   --date 2026-04-28 \
   --open-time "09:00" --close-time "18:00"
-```
 
-### Other Commands
-
-```bash
+# Other Commands
 t1 balance       # Account balance
 t1 carriers      # List available carriers
 t1 mcp run       # Start MCP server
 ```
 
+> The origin address must be registered in T1Envios before scheduling a pickup.
+
 ---
 
-## MCP Server
+## MCP Server (`t1-shipments-mcp`)
 
-T1Shipments ships an [MCP](https://modelcontextprotocol.io) server compatible with any MCP client (Claude Desktop, opencode, Cursor, IDE plugins, custom stdio clients, etc.).
+The MCP server enables AI agents (Claude Desktop, opencode, Cursor, etc.) to interact with T1Envios through the [Model Context Protocol](https://modelcontextprotocol.io).
+
+### Installation
+
+```bash
+# From GitHub (no clone needed)
+pip install "t1-shipments-mcp @ git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp"
+
+# From PyPI (when published)
+pip install t1-shipments-mcp
+uv tool install t1-shipments-mcp
+
+# Run without installing (via uvx)
+uvx --from "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp" t1shipments-mcp
+
+# From install.sh
+curl -fsSL https://raw.githubusercontent.com/vimoda/t1-shipments/main/install.sh | bash -s mcp
+
+# From source (clone)
+git clone https://github.com/vimoda/t1-shipments
+cd t1-shipments
+uv sync
+uv run t1shipments-mcp
+```
+
+### MCP Client Configuration
+
+Once `t1-shipments-mcp` is installed, configure your MCP client with the JSON block that matches your installation method.
+
+#### Via `uvx` (no installation — runs from GitHub on demand)
+
+```json
+{
+  "mcpServers": {
+    "t1shipments": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp",
+        "t1shipments-mcp"
+      ],
+      "env": {
+        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
+        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
+        "T1_USERNAME":      "${T1_USERNAME}",
+        "T1_PASSWORD":      "${T1_PASSWORD}",
+        "T1_ENV":           "dev",
+        "T1_SHOP_ID":       "${T1_SHOP_ID}",
+        "T1_COMERCE_ID":    "${T1_COMERCE_ID}",
+        "T1_LOG_LEVEL":     "DEBUG"
+      }
+    }
+  }
+}
+```
+
+Point to a specific tag / commit / branch:
+
+```json
+"args": ["--from", "git+https://github.com/vimoda/t1-shipments@v0.1.0#subdirectory=packages/mcp", "t1shipments-mcp"]
+```
+
+#### Via `uv` — from a cloned repository
+
+```json
+{
+  "mcpServers": {
+    "t1shipments": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/path/to/t1-shipments",
+        "run",
+        "python",
+        "-m",
+        "t1shipments.mcp.server"
+      ],
+      "env": {
+        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
+        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
+        "T1_USERNAME":      "${T1_USERNAME}",
+        "T1_PASSWORD":      "${T1_PASSWORD}",
+        "T1_ENV":           "dev",
+        "T1_SHOP_ID":       "${T1_SHOP_ID}",
+        "T1_COMERCE_ID":    "${T1_COMERCE_ID}",
+        "T1_LOG_LEVEL":     "DEBUG"
+      }
+    }
+  }
+}
+```
+
+#### Via installed binary (`pip install` / `uv tool install`)
+
+```json
+{
+  "mcpServers": {
+    "t1shipments": {
+      "command": "t1shipments-mcp",
+      "env": {
+        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
+        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
+        "T1_USERNAME":      "${T1_USERNAME}",
+        "T1_PASSWORD":      "${T1_PASSWORD}",
+        "T1_ENV":           "dev",
+        "T1_SHOP_ID":       "${T1_SHOP_ID}",
+        "T1_COMERCE_ID":    "${T1_COMERCE_ID}",
+        "T1_LOG_LEVEL":     "DEBUG"
+      }
+    }
+  }
+}
+```
+
+#### Config file locations
+
+| Client | Config file |
+|--------|-------------|
+| Claude Desktop (macOS) | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Claude Desktop (Windows) | `%APPDATA%\Claude\claude_desktop_config.json` |
+| Claude Code | `.claude/mcp_config.json` in your project |
+
+#### Test the installation
+
+```bash
+# With MCP Inspector (interactive UI)
+npx @modelcontextprotocol/inspector uvx --from "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp" t1shipments-mcp
+
+# Or if installed locally
+npx @modelcontextprotocol/inspector t1shipments-mcp
+```
 
 ### Auth & Token Lifecycle
 
@@ -609,7 +514,7 @@ python -m t1shipments.mcp.server
 | `list_carriers` | List all shipping carriers and services available in your T1Envios account. |
 | `schedule_pickup` | Schedule a pickup for an existing shipment. |
 
-### MCP Tool Input Schemas
+### Tool Input Schemas
 
 **quote_shipment:**
 ```json
@@ -653,6 +558,32 @@ python -m t1shipments.mcp.server
   "packages": 1
 }
 ```
+
+---
+
+## Configuration
+
+Set environment variables (or use a `.env` file):
+
+```env
+T1_CLIENT_ID=your_client_id
+T1_CLIENT_SECRET=your_client_secret
+T1_BASE_URL=https://api.t1envios.com
+T1_SHOP_ID=your_shop_id
+```
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `T1_CLIENT_ID` | Yes | — | Keycloak client ID |
+| `T1_CLIENT_SECRET` | Yes | — | Keycloak client secret |
+| `T1_BASE_URL` | No | `https://api.t1envios.com` | API base URL |
+| `T1_SHOP_ID` | No | — | Commerce ID — sent as `comercio_id` on every request |
+| `T1_USERNAME` | No | — | T1Envios account email (auto-login in MCP) |
+| `T1_PASSWORD` | No | — | T1Envios account password |
+| `T1_ENV` | No | `dev` | `dev` or `prod` |
+| `T1_COMERCE_ID` | No | — | Internal commerce identifier |
+| `T1_LOG_LEVEL` | No | — | Logging level (e.g., `DEBUG`) |
+| `T1_TIMEOUT` | No | `30.0` | HTTP timeout in seconds |
 
 ---
 
