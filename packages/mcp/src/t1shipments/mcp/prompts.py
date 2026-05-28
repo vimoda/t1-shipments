@@ -115,6 +115,8 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             f"weight={weight} kg, "
             f"dimensions: width={width}cm, height={height}cm, length={length}cm, "
             f"{'with' if str(insurance).lower() == 'true' else 'without'} insurance. "
+            "⚠️ This is a QUICK QUOTE only — do NOT proceed to create a shipment or generate a guide. "
+            "If the user wants to create a shipment, tell them to use the full quote flow instead. "
             "If dimensions were not provided, use defaults: width=30cm, height=20cm, length=15cm. "
             "Calculate volumetric weight = ceil(width × height × length / 5000). "
             "All weights are rounded UP to the nearest integer. "
