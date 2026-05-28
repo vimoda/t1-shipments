@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from t1shipments.core.models.shipment import ShipmentRequest
-
 from conftest import load_fixture
+from t1shipments.core.models.shipment import ShipmentRequest
 
 
 def _req() -> ShipmentRequest:

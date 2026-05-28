@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-import pytest
-from typer.testing import CliRunner
-
-from t1shipments.core.auth.token import Token
 from t1shipments.cli.app import app
-from t1shipments.core.models.quote import QuoteResponse, Rate
+from t1shipments.core.auth.token import Token
+from t1shipments.core.models.quote import QuoteResponse
 from t1shipments.core.models.tracking import Balance, Carrier, TrackingResponse
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -18,7 +16,7 @@ def _valid_token() -> Token:
     return Token(
         access_token="tok",
         refresh_token=None,
-        expires_at=datetime.now(tz=timezone.utc) + timedelta(hours=1),
+        expires_at=datetime.now(tz=UTC) + timedelta(hours=1),
     )
 
 
@@ -81,7 +79,7 @@ def test_auth_login(mock_settings_cls, mock_cls):
     mock_client = MagicMock()
     mock_cls.from_settings.return_value = mock_client
     mock_client.login.return_value.refresh_token = "ref"
-    mock_client.login.return_value.expires_at = datetime.now(tz=timezone.utc) + timedelta(hours=1)
+    mock_client.login.return_value.expires_at = datetime.now(tz=UTC) + timedelta(hours=1)
     result = runner.invoke(app, ["auth", "login"], input="user@example.com\nsecret123\n")
     assert result.exit_code == 0
     mock_client.login.assert_called_once_with("user@example.com", "secret123", store_id=None)

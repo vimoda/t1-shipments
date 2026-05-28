@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import httpx
 import pytest
-
-from t1shipments.core.auth.storage import TokenStorage
 from t1shipments.core.auth.token import Token
 from t1shipments.core.client import T1Client
 from t1shipments.core.config import Endpoints
@@ -38,7 +36,7 @@ def valid_token() -> Token:
     return Token(
         access_token="test-access-token",
         refresh_token="test-refresh-token",
-        expires_at=datetime.now(tz=timezone.utc) + timedelta(hours=1),
+        expires_at=datetime.now(tz=UTC) + timedelta(hours=1),
     )
 
 
@@ -47,7 +45,7 @@ def expired_token() -> Token:
     return Token(
         access_token="expired-access-token",
         refresh_token="test-refresh-token",
-        expires_at=datetime.now(tz=timezone.utc) - timedelta(hours=1),
+        expires_at=datetime.now(tz=UTC) - timedelta(hours=1),
     )
 
 

@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import json
-import stat
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
-
-from t1shipments.core.auth.storage import FileStorage, HybridStorage
+from t1shipments.core.auth.storage import FileStorage
 from t1shipments.core.auth.token import Token
 
 
@@ -21,7 +18,7 @@ def sample_token() -> Token:
     return Token(
         access_token="abc",
         refresh_token="xyz",
-        expires_at=datetime.now(tz=timezone.utc) + timedelta(hours=1),
+        expires_at=datetime.now(tz=UTC) + timedelta(hours=1),
     )
 
 

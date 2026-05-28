@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import pytest
-
+from conftest import load_fixture
 from t1shipments.core.exceptions import ApiError
 from t1shipments.core.models.quote import QuoteRequest
-
-from conftest import load_fixture
 
 
 def _req() -> QuoteRequest:

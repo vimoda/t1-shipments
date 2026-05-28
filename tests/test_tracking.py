@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import pytest
-
-from t1shipments.core.exceptions import ApiError
-
 from conftest import load_fixture
+from t1shipments.core.exceptions import ApiError
 
 
 def test_track_state_success(httpx_mock, client):

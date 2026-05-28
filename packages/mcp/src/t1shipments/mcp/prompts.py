@@ -9,68 +9,68 @@ from mcp.server import Server
 _PROMPTS: list[types.Prompt] = [
     types.Prompt(
         name="quick_quote",
-        description="Cotización rápida: CP origen, CP destino, peso, dimensiones y seguro opcional.",
+        description="Quick quote: origin ZIP, destination ZIP, weight, dimensions, and optional insurance.",
         arguments=[
-            types.PromptArgument(name="origin_zip", description="Código postal origen", required=True),
-            types.PromptArgument(name="dest_zip", description="Código postal destino", required=True),
-            types.PromptArgument(name="weight_kg", description="Peso en kg", required=True),
-            types.PromptArgument(name="width_cm", description="Ancho en cm (default 30)", required=False),
-            types.PromptArgument(name="height_cm", description="Alto en cm (default 20)", required=False),
-            types.PromptArgument(name="length_cm", description="Largo en cm (default 15)", required=False),
-            types.PromptArgument(name="insurance", description="Con seguro? true/false", required=False),
-            types.PromptArgument(name="package_value", description="Valor del paquete en MXN (requerido solo si con seguro)", required=False),
+            types.PromptArgument(name="origin_zip", description="Origin ZIP code", required=True),
+            types.PromptArgument(name="dest_zip", description="Destination ZIP code", required=True),
+            types.PromptArgument(name="weight_kg", description="Weight in kg", required=True),
+            types.PromptArgument(name="width_cm", description="Width in cm (default 30)", required=False),
+            types.PromptArgument(name="height_cm", description="Height in cm (default 20)", required=False),
+            types.PromptArgument(name="length_cm", description="Length in cm (default 15)", required=False),
+            types.PromptArgument(name="insurance", description="With insurance? true/false", required=False),
+            types.PromptArgument(name="package_value", description="Package value in MXN (required only if insurance)", required=False),
         ],
     ),
     types.Prompt(
         name="create_shipment_with_stored_address",
-        description="Crear envío usando quote_token y direcciones previamente almacenadas.",
+        description="Create a shipment using a quote_token and previously stored addresses.",
         arguments=[
-            types.PromptArgument(name="quote_token", description="Token de la tarifa elegida", required=True),
-            types.PromptArgument(name="content", description="Contenido del paquete (máx 25 chars)", required=False),
-            types.PromptArgument(name="use_stored_origin", description="Usar dirección de origen almacenada? true/false", required=False),
-            types.PromptArgument(name="use_stored_destination", description="Usar dirección de destino almacenada? true/false", required=False),
+            types.PromptArgument(name="quote_token", description="Selected rate token", required=True),
+            types.PromptArgument(name="content", description="Package contents (max 25 chars)", required=False),
+            types.PromptArgument(name="use_stored_origin", description="Use stored origin address? true/false", required=False),
+            types.PromptArgument(name="use_stored_destination", description="Use stored destination address? true/false", required=False),
         ],
     ),
     types.Prompt(
         name="quote",
-        description="Cotiza envío completo entre dos códigos postales.",
+        description="Quote a full shipment between two ZIP codes.",
         arguments=[
-            types.PromptArgument(name="origin_zip", description="Código postal origen", required=True),
-            types.PromptArgument(name="dest_zip", description="Código postal destino", required=True),
-            types.PromptArgument(name="weight_kg", description="Peso en kg", required=True),
-            types.PromptArgument(name="width_cm", description="Ancho en cm", required=False),
-            types.PromptArgument(name="height_cm", description="Alto en cm", required=False),
-            types.PromptArgument(name="length_cm", description="Largo en cm", required=False),
-            types.PromptArgument(name="insurance", description="Con seguro? true/false", required=False),
-            types.PromptArgument(name="package_value", description="Valor del paquete en MXN (requerido solo si con seguro)", required=False),
+            types.PromptArgument(name="origin_zip", description="Origin ZIP code", required=True),
+            types.PromptArgument(name="dest_zip", description="Destination ZIP code", required=True),
+            types.PromptArgument(name="weight_kg", description="Weight in kg", required=True),
+            types.PromptArgument(name="width_cm", description="Width in cm", required=False),
+            types.PromptArgument(name="height_cm", description="Height in cm", required=False),
+            types.PromptArgument(name="length_cm", description="Length in cm", required=False),
+            types.PromptArgument(name="insurance", description="With insurance? true/false", required=False),
+            types.PromptArgument(name="package_value", description="Package value in MXN (required only if insurance)", required=False),
         ],
     ),
     types.Prompt(
         name="ship",
-        description="Crear envío desde un quote_token.",
+        description="Create a shipment from a quote_token.",
         arguments=[
-            types.PromptArgument(name="quote_token", description="Token de la tarifa elegida (de /quote)", required=True),
-            types.PromptArgument(name="content", description="Contenido del paquete, máx 25 chars", required=False),
+            types.PromptArgument(name="quote_token", description="Rate token (from /quote)", required=True),
+            types.PromptArgument(name="content", description="Package contents, max 25 chars", required=False),
         ],
     ),
     types.Prompt(
         name="track_status",
-        description="Rastrear guía con historial completo.",
+        description="Track a guide with full history.",
         arguments=[
-            types.PromptArgument(name="guide", description="Número de guía", required=True),
+            types.PromptArgument(name="guide", description="Guide number", required=True),
         ],
     ),
     types.Prompt(
         name="schedule_pickup_tomorrow",
-        description="Programar recolección para mañana con horarios predefinidos.",
+        description="Schedule a pickup for tomorrow with predefined times.",
         arguments=[
-            types.PromptArgument(name="carrier", description="Paquetería: DHL, FEDEX, UPS", required=True),
-            types.PromptArgument(name="weight_kg", description="Peso total en kg", required=True),
+            types.PromptArgument(name="carrier", description="Carrier: DHL, FEDEX, UPS", required=True),
+            types.PromptArgument(name="weight_kg", description="Total weight in kg", required=True),
         ],
     ),
     types.Prompt(
         name="choose_quote_flow",
-        description="Preguntar al usuario si quiere cotización rápida o flujo completo de envío.",
+        description="Ask the user if they want a quick quote or the full shipment flow.",
         arguments=[],
     ),
 ]
@@ -81,19 +81,19 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
 
     if name == "choose_quote_flow":
         text = (
-            "Antes de responder, revisá tu memoria por direcciones guardadas. "
-            "- Si existen ORIGEN y DESTINO: preguntá '¿Querés usar [origen] → [destino], "
-            "cambiar solo el origen, cambiar solo el destino, o dar ambos nuevos?' "
-            "- Si solo existe ORIGEN: 'Tengo guardado [origen]. ¿Lo usamos o ponemos otro? Y decime el destino.' "
-            "- Si solo existe DESTINO: 'Tengo guardado [destino]. ¿Lo usamos o ponemos otro? Y decime el origen.' "
-            "- Si no hay nada: seguí normal. "
-            "Luego preguntá: ¿Querés una cotización rápida (datos mínimos) o iniciar el flujo completo de envío "
-            "(se pedirán todos los datos de dirección)? "
-            "Respondé con 'rápida' o 'envío'. "
-            "Respondé en el mismo idioma que el usuario está usando."
+            "Before responding, check your memory for saved addresses. "
+            "- If both ORIGIN and DESTINATION are saved: ask 'Want to use [origin] → [destination], "
+            "change only the origin, change only the destination, or provide both new?' "
+            "- If only ORIGIN is saved: 'I have [origin] stored. Should we use it or a different one? And tell me the destination.' "
+            "- If only DESTINATION is saved: 'I have [destination] stored. Should we use it or a different one? And tell me the origin.' "
+            "- If nothing is saved: proceed normally. "
+            "Then ask: Do you want a quick quote (minimal data) or start the full shipment flow "
+            "(all address details will be requested)? "
+            "Reply with 'quick' or 'shipment'. "
+            "Respond in the same language the user is using."
         )
         return types.GetPromptResult(
-            description="Elegir flujo de cotización",
+            description="Choose quote flow",
             messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
         )
 
@@ -106,30 +106,30 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         length = args.get("length_cm", "?")
         insurance = args.get("insurance", "false")
         text = (
-            f"Cotiza un envío rápido desde el CP {origin} al CP {dest}, "
-            f"peso={weight} kg, "
-            f"dimensiones: ancho={width}cm, alto={height}cm, largo={length}cm, "
-            f"{'con' if str(insurance).lower() == 'true' else 'sin'} seguro. "
-            "Si no se proporcionaron dimensiones, usá los valores por defecto: ancho=30cm, alto=20cm, largo=15cm. "
-            "Calculá el peso volumétrico = ceil(ancho × alto × largo / 5000). "
-            "Todos los pesos se redondean HACIA ARRIBA al entero más cercano. "
-            "Usá el MAYOR entre el peso físico y el peso volumétrico como peso cotizado. "
-            "Si se solicita seguro, también incluí el valor del paquete (package_value en MXN). "
-            "Llamá a quote_shipment y mostrá las tarifas en una tabla numerada. "
-            "Columnas: #, Paquetería, Servicio, Tipo, Costo guía, Costo seguro, Total, Moneda, "
-            "Días, Entrega estimada, Peso (kg), Peso volumétrico (kg), Dimensiones (cm), Quote token. "
-            "Cuando insurance=true y insurance_applied=true: Costo guía = base_cost, Costo seguro = insurance_cost, Total = total_cost. "
-            "Cuando insurance=false o insurance_applied=false: Costo guía = total_cost, Costo seguro = '—', Total = total_cost. "
-            "En tu respuesta, aclará claramente qué peso se usó para cotizar — "
-            "ej. 'Cotizando con peso volumétrico de X kg (redondeado, peso físico de Y kg).' "
-            "Si ambos son iguales, decí: 'Cotizando con peso físico de X kg.' "
-            "Luego revisá tu memoria para ver si esas direcciones ya están guardadas. "
-            "Si no están, preguntale al usuario: '¿Querés guardarlas?' "
-            "Terminá con: '¿Con qué servicio deseas proceder?' "
-            "Respondé en el mismo idioma que el usuario está usando."
+            f"Quick-quote a shipment from ZIP {origin} to ZIP {dest}, "
+            f"weight={weight} kg, "
+            f"dimensions: width={width}cm, height={height}cm, length={length}cm, "
+            f"{'with' if str(insurance).lower() == 'true' else 'without'} insurance. "
+            "If dimensions were not provided, use defaults: width=30cm, height=20cm, length=15cm. "
+            "Calculate volumetric weight = ceil(width × height × length / 5000). "
+            "All weights are rounded UP to the nearest integer. "
+            "Use the LARGER of physical weight and volumetric weight as the quoted weight. "
+            "If insurance is requested, also include the package value (package_value in MXN). "
+            "Call quote_shipment and display rates in a numbered table. "
+            "Columns: #, Carrier, Service, Type, Guide cost, Insurance cost, Total, Currency, "
+            "Days, Estimated delivery, Weight (kg), Volumetric weight (kg), Dimensions (cm), Quote token. "
+            "When insurance=true and insurance_applied=true: Guide cost = base_cost, Insurance cost = insurance_cost, Total = total_cost. "
+            "When insurance=false or insurance_applied=false: Guide cost = total_cost, Insurance cost = '—', Total = total_cost. "
+            "In your response, clarify which weight was used — "
+            "e.g. 'Quoting with volumetric weight of X kg (rounded up, physical weight Y kg).' "
+            "If both are equal, say: 'Quoting with physical weight of X kg.' "
+            "Then check your memory to see if those addresses are already saved. "
+            "If they are not, ask the user: 'Do you want to save them?' "
+            "End with: 'Which service would you like to proceed with?' "
+            "Respond in the same language the user is using."
         )
         return types.GetPromptResult(
-            description="Cotización rápida",
+            description="Quick quote",
             messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
         )
 
@@ -142,32 +142,32 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         length = args.get("length_cm", "?")
         insurance = args.get("insurance", "false")
         text = (
-            f"Cotiza un envío desde el código postal {origin} al {dest}, "
-            f"peso={weight} kg, "
-            f"dimensiones: ancho={width}cm, alto={height}cm, largo={length}cm, "
-            f"{'con' if str(insurance).lower() == 'true' else 'sin'} seguro. "
-            "Si no se proporcionaron dimensiones, usá los valores por defecto: ancho=30cm, alto=20cm, largo=15cm. "
-            "Calculá el peso volumétrico = ceil(ancho × alto × largo / 5000). "
-            "Todos los pesos se redondean HACIA ARRIBA al entero más cercano. "
-            "Usá el MAYOR entre el peso físico y el peso volumétrico como peso cotizado. "
-            "Si se solicita seguro, también incluí el valor del paquete (package_value en MXN). "
-            "Llamá a quote_shipment y preséntame los resultados como una tabla numerada con columnas: "
-            "#, Paquetería, Servicio, Tipo, Costo guía, Costo seguro, Total, Moneda, "
-            "Días, Entrega estimada, Peso (kg), Peso volumétrico (kg), Dimensiones (cm), Quote token. "
-            "Marca con ★ las tarifas con recommended=true. "
-            "Cuando insurance=true y insurance_applied=true: Costo guía = base_cost, Costo seguro = insurance_cost, Total = total_cost. "
-            "Cuando insurance=false o insurance_applied=false: Costo guía = total_cost, Costo seguro = '—', Total = total_cost. "
-            "Si pedí seguro y alguna tarifa no lo aplica, indícalo claramente en su fila (insurance_note). "
-            "En tu respuesta, aclará claramente qué peso se usó para cotizar — "
-            "ej. 'Cotizando con peso volumétrico de X kg (redondeado, peso físico de Y kg).' "
-            "Si ambos son iguales, decí: 'Cotizando con peso físico de X kg.' "
-            "Luego revisá tu memoria para ver si esas direcciones ya están guardadas. "
-            "Si no están, preguntale al usuario: '¿Querés guardarlas?' "
-            "Termina preguntando: '¿Con qué servicio deseas proceder?' "
-            "Respondé en el mismo idioma que el usuario está usando."
+            f"Quote a shipment from ZIP code {origin} to {dest}, "
+            f"weight={weight} kg, "
+            f"dimensions: width={width}cm, height={height}cm, length={length}cm, "
+            f"{'with' if str(insurance).lower() == 'true' else 'without'} insurance. "
+            "If dimensions were not provided, use defaults: width=30cm, height=20cm, length=15cm. "
+            "Calculate volumetric weight = ceil(width × height × length / 5000). "
+            "All weights are rounded UP to the nearest integer. "
+            "Use the LARGER of physical weight and volumetric weight as the quoted weight. "
+            "If insurance is requested, also include the package value (package_value in MXN). "
+            "Call quote_shipment and present results in a numbered table with columns: "
+            "#, Carrier, Service, Type, Guide cost, Insurance cost, Total, Currency, "
+            "Days, Estimated delivery, Weight (kg), Volumetric weight (kg), Dimensions (cm), Quote token. "
+            "Mark rates with recommended=true with ★. "
+            "When insurance=true and insurance_applied=true: Guide cost = base_cost, Insurance cost = insurance_cost, Total = total_cost. "
+            "When insurance=false or insurance_applied=false: Guide cost = total_cost, Insurance cost = '—', Total = total_cost. "
+            "If insurance was requested and a rate did not apply it, clearly note it in that row (insurance_note). "
+            "In your response, clarify which weight was used — "
+            "e.g. 'Quoting with volumetric weight of X kg (rounded up, physical weight Y kg).' "
+            "If both are equal, say: 'Quoting with physical weight of X kg.' "
+            "Then check your memory to see if those addresses are already saved. "
+            "If they are not, ask the user: 'Do you want to save them?' "
+            "End by asking: 'Which service would you like to proceed with?' "
+            "Respond in the same language the user is using."
         )
         return types.GetPromptResult(
-            description="Cotización de envío",
+            description="Shipment quote",
             messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
         )
 
@@ -177,27 +177,33 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         use_origin = str(args.get("use_stored_origin", "false")).lower() == "true"
         use_dest = str(args.get("use_stored_destination", "false")).lower() == "true"
         text = (
-            f"Crea un envío usando el token de cotización: {token}. "
-            f"Contenido del paquete: {content}. "
-            "Si use_stored_origin es true, usá la dirección de origen ya almacenada. "
-            "Si es false, revisá tu memoria primero (sesiones anteriores). "
-            "Si hay direcciones guardadas, ofrecéselas al usuario. Si no, pedí los datos UNO POR UNO: "
-            "nombre, esperá respuesta, luego apellido, email, teléfono, calle, número, colonia, "
-            "municipio, estado, CP y referencias. "
-            "⚠️ references = opcional (ej. 'junto al OXXO'). Mandá '' si el usuario no las da. "
-            "⚠️ También preguntale al usuario qué contiene el paquete (content, máx 25 chars). "
-            "⚠️ guide_origin no se incluye (usa el default). "
-            "De igual forma para el destinatario: si use_stored_destination es true, usá la almacenada; "
-             "si es false, revisá memoria y ofrecé las guardadas, o pedí datos uno por uno. "
-            "⚠️ AVISO: esta operación tiene costo monetario. Confirmá con el usuario antes de continuar. "
-            "DESPUÉS de la guía: revisá si esas direcciones ya están en tu memoria. "
-            "Si ya existen: decí 'Las direcciones ya las tengo guardadas.' "
-            "Si no: preguntale '¿Querés guardarlas?' "
-            "Al éxito, respondé: número de guía, paquetería, fecha estimada de entrega y link de etiqueta. "
-            "Respondé en el mismo idioma que el usuario está usando."
+            f"Create a shipment using the quote token: {token}. "
+            f"Package contents: {content}. "
+            "If use_stored_origin is true, use the already stored origin address. "
+            "If false, check your memory first (previous sessions). "
+            "If there are saved addresses, offer them to the user. If not, request data ONE BY ONE: "
+            "first name, wait for response, then last name, email, phone, street, exterior number, neighborhood, "
+            "municipality, and state. "
+            "⚠️ DO NOT ask for the ZIP code — you already know it from the previous quote, use that same one. If you don't have it then ask for it again. "
+            "⚠️ references (max 35 chars) has two parts combined: "
+            "first ask for interior details (interior, apartment, tower, etc. e.g. 'Int 3B', 'Apt 501', 'Tower A Apt 12'), "
+            "then ask for general references (e.g. 'next to the OXXO'). "
+            "If the user provides both, combine them in references separated by ' — ' "
+            "(e.g. 'Apt 501 — next to the OXXO'). If it doesn't all fit, prioritize the interior detail. "
+            "If neither is given, send ''. "
+            "⚠️ Also ask the user what the package contains (content, max 25 chars). "
+            "⚠️ guide_origin is not included (uses default). "
+            "Same for the recipient: if use_stored_destination is true, use the stored one; "
+             "if false, check memory and offer saved ones, or request data one by one. "
+            "⚠️ WARNING: this operation has a monetary cost. Confirm with the user before proceeding. "
+            "AFTER the guide: check if those addresses are already in your memory. "
+            "If they already exist: say 'I already have those addresses saved.' "
+            "If not: ask 'Would you like to save them?' "
+            "On success, respond with: guide number, carrier, estimated delivery date, and label link. "
+            "Respond in the same language the user is using."
         )
         return types.GetPromptResult(
-            description="Crear envío con direcciones almacenadas",
+            description="Create shipment with stored addresses",
             messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
         )
 
@@ -205,40 +211,46 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         token = args.get("quote_token", "?")
         content = args.get("content", "Producto")
         text = (
-            f"Crea un envío usando el token de cotización: {token}. "
-            f"Contenido del paquete: {content}. "
-            "ANTES de pedir datos, revisá tu memoria (sesiones anteriores). "
-            "Si el usuario tiene direcciones guardadas, mostráselas y preguntá si quiere reusarlas o dar datos nuevos. "
-            "Si no hay guardadas o prefiere datos nuevos, pedí cada campo UNO POR UNO: "
-            "primero nombre del remitente, esperá respuesta, "
-            "luego apellido, email, teléfono, calle, número, colonia, municipio, estado, CP y referencias. "
-            "Luego lo mismo con el destinatario. "
-            "⚠️ references = opcional (ej. 'junto al OXXO'). Mandá '' si el usuario no las da. "
-            "⚠️ También preguntale al usuario qué contiene el paquete (content, máx 25 chars). "
-            "⚠️ guide_origin no se incluye (usa el default). "
-            "⚠️ AVISO: esta operación tiene costo monetario. Confirmá con el usuario antes de continuar.\n"
-            "DESPUÉS de la guía: revisá si esas direcciones ya están en tu memoria. "
-            "Si ya existen: decí 'Las direcciones ya las tengo guardadas.' "
-            "Si no: preguntale '¿Querés guardarlas?' "
-            "Al éxito, respondé: número de guía, paquetería, fecha estimada de entrega y link de etiqueta. "
-            "Respondé en el mismo idioma que el usuario está usando."
+            f"Create a shipment using the quote token: {token}. "
+            f"Package contents: {content}. "
+            "BEFORE requesting data, check your memory (previous sessions). "
+            "If the user has saved addresses, show them and ask if they want to reuse them or provide new data. "
+            "If there are no saved addresses or they prefer new ones, request each field ONE BY ONE: "
+            "first the sender's first name, wait for response, "
+            "then last name, email, phone, street, exterior number, neighborhood, municipality, and state. "
+            "⚠️ DO NOT ask for the ZIP code — you already know it from the previous quote, use that same one. If you don't have it then ask for it again. "
+            "⚠️ references (max 35 chars) has two parts combined: "
+            "first ask for interior details (interior, apartment, tower, etc. e.g. 'Int 3B', 'Apt 501', 'Tower A Apt 12'), "
+            "then ask for general references (e.g. 'next to the OXXO'). "
+            "If the user provides both, combine them in references separated by ' — ' "
+            "(e.g. 'Apt 501 — next to the OXXO'). If it doesn't all fit, prioritize the interior detail. "
+            "If neither is given, send ''. "
+            "Then do the same for the recipient. "
+            "⚠️ Also ask the user what the package contains (content, max 25 chars). "
+            "⚠️ guide_origin is not included (uses default). "
+            "⚠️ WARNING: this operation has a monetary cost. Confirm with the user before proceeding.\n"
+            "AFTER the guide: check if those addresses are already in your memory. "
+            "If they already exist: say 'I already have those addresses saved.' "
+            "If not: ask 'Would you like to save them?' "
+            "On success, respond with: guide number, carrier, estimated delivery date, and label link. "
+            "Respond in the same language the user is using."
         )
         return types.GetPromptResult(
-            description="Creación de envío",
+            description="Create shipment",
             messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
         )
 
     if name == "track_status":
         guide = args.get("guide", "?")
         text = (
-            f"Rastrea la guía {guide}. "
-            "Primero llamá a track_guide para obtener el estado actual y última actualización. "
-            "Si el paquete parece retrasado (fecha estimada vencida o estado estancado), "
-            "llamá también a track_detail para obtener el historial completo y resumí qué ocurrió. "
-            "Respondé en el mismo idioma que el usuario está usando."
+            f"Track guide {guide}. "
+            "First call track_guide to get the current status and last update. "
+            "If the package appears delayed (estimated date expired or stuck status), "
+            "also call track_detail to get the full history and summarize what happened. "
+            "Respond in the same language the user is using."
         )
         return types.GetPromptResult(
-            description="Estado de rastreo",
+            description="Tracking status",
             messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
         )
 
@@ -247,28 +259,28 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         weight = args.get("weight_kg", "?")
         tomorrow = (date.today() + timedelta(days=1)).isoformat()
         text = (
-            f"Programá una recolección con {carrier} para mañana ({tomorrow}), {weight} kg en total. "
-            "Usá open_time=09:00 y close_time=18:00. "
-            "Pedí los datos UNO POR UNO: primero el nombre de contacto, esperá la respuesta, "
-            "luego apellido, teléfono, email, calle, número, colonia, municipio, estado, CP, "
-            "referencias, piezas y dimensiones. No preguntes varios campos en un mismo mensaje. "
-            "y luego llamá a schedule_pickup. Avísale que esta operación tiene costo monetario. "
-            "Respondé en el mismo idioma que el usuario está usando."
+            f"Schedule a pickup with {carrier} for tomorrow ({tomorrow}), {weight} kg total. "
+            "Use open_time=09:00 and close_time=18:00. "
+            "Request data ONE BY ONE: first the contact name, wait for the response, "
+            "then last name, phone, email, street, number, neighborhood, municipality, state, ZIP, "
+            "references, pieces, and dimensions. Do not ask multiple fields in the same message. "
+            "Then call schedule_pickup. Warn the user that this operation has a monetary cost. "
+            "Respond in the same language the user is using."
         )
         return types.GetPromptResult(
-            description="Recolección mañana",
+            description="Schedule pickup tomorrow",
             messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
         )
 
     if name == "check_balance_before_ship":
         text = (
-            "Revisá mi saldo de T1Envios con get_balance. "
-            "Si el saldo es menor a 200 MXN, avisame que podría no tener fondos suficientes para crear un envío y sugerí recargar. "
-            "De lo contrario, confirmá el saldo disponible e indicame que puedo continuar. "
-            "Respondé en el mismo idioma que el usuario está usando."
+            "Check my T1Envios balance with get_balance. "
+            "If the balance is less than 200 MXN, let me know I might not have sufficient funds to create a shipment and suggest topping up. "
+            "Otherwise, confirm the available balance and let me know I can proceed. "
+            "Respond in the same language the user is using."
         )
         return types.GetPromptResult(
-            description="Verificar saldo",
+            description="Check balance",
             messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
         )
 

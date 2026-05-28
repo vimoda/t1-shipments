@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from t1shipments.core.models.tracking import PickupRequest
-
 from conftest import load_fixture
+from t1shipments.core.models.tracking import PickupRequest
 
 
 def _req() -> PickupRequest:

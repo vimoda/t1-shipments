@@ -97,7 +97,7 @@ with T1Client(client_id="...", client_secret="...", shop_id="...") as client:
         origin_neighborhood="Bondojito",
         origin_state="Ciudad de Mexico",
         origin_municipality="Gustavo A. Madero",
-        origin_references="Frente a la papelería",
+        origin_references="Depto 5 — Frente a la papelería",
         origin_postal_code="02719",
         destination_first_name="Ana",
         destination_last_name="García",
@@ -108,7 +108,7 @@ with T1Client(client_id="...", client_secret="...", shop_id="...") as client:
         destination_neighborhood="Centro",
         destination_state="Guerrero",
         destination_municipality="Chilpancingo de los Bravo",
-        destination_references="Edificio blanco esquina",
+        destination_references="Int 3B — Edificio blanco esquina",
         destination_postal_code="40900",
         packages=1,
     ))
@@ -298,7 +298,7 @@ t1 create-shipment \
   --origin-street "Av. Azcapotzalco" --origin-number "45" \
   --origin-neighborhood "Bondojito" \
   --origin-state "Ciudad de Mexico" --origin-municipality "Gustavo A. Madero" \
-  --origin-references "Frente a la papelería" \
+  --origin-references "Depto 5 — Frente a la papelería" \
   --origin-zip-code 02719 \
   --destination-name "Ana" --destination-last-name "García" \
   --destination-email "ana@example.com" \
@@ -306,7 +306,7 @@ t1 create-shipment \
   --destination-street "Av. Insurgentes" --destination-number "200" \
   --destination-neighborhood "Centro" \
   --destination-state "Guerrero" --destination-municipality "Chilpancingo de los Bravo" \
-  --destination-references "Edificio blanco esquina" \
+  --destination-references "Int 3B — Edificio blanco esquina" \
   --destination-zip-code 40900
 
 # Descargar Etiqueta

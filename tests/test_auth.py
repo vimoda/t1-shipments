@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import httpx
 import pytest
-
+from conftest import InMemoryStorage, load_fixture
 from t1shipments.core.auth.authenticator import Authenticator
 from t1shipments.core.auth.token import Token
 from t1shipments.core.config import Endpoints
 from t1shipments.core.exceptions import AuthError, SessionExpiredError
-
-from conftest import InMemoryStorage, load_fixture
 
 AUTH_URL = "https://api.example.com/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token"
 BALANCE_URL = "https://api.example.com/balance/consult"
@@ -63,7 +61,7 @@ def test_refresh_token(httpx_mock, endpoints):
     expired = Token(
         access_token="old",
         refresh_token="old-refresh",
-        expires_at=datetime.now(tz=timezone.utc) - timedelta(hours=1),
+        expires_at=datetime.now(tz=UTC) - timedelta(hours=1),
     )
     storage = InMemoryStorage(token=expired)
     auth = _auth(endpoints, storage=storage)
@@ -81,7 +79,7 @@ def test_refresh_raises_session_expired_on_failure(httpx_mock, endpoints):
     expired = Token(
         access_token="old",
         refresh_token="old-refresh",
-        expires_at=datetime.now(tz=timezone.utc) - timedelta(hours=1),
+        expires_at=datetime.now(tz=UTC) - timedelta(hours=1),
     )
     auth = _auth(endpoints, storage=InMemoryStorage(token=expired))
     auth._token = expired
@@ -93,7 +91,7 @@ def test_ensure_valid_uses_stored_token(endpoints):
     valid = Token(
         access_token="stored",
         refresh_token=None,
-        expires_at=datetime.now(tz=timezone.utc) + timedelta(hours=2),
+        expires_at=datetime.now(tz=UTC) + timedelta(hours=2),
     )
     auth = _auth(endpoints, storage=InMemoryStorage(token=valid))
     assert auth.ensure_valid().access_token == "stored"
@@ -112,7 +110,7 @@ def test_401_triggers_refresh_then_retry(httpx_mock, endpoints):
     valid = Token(
         access_token="old-valid",
         refresh_token="refresh-token",
-        expires_at=datetime.now(tz=timezone.utc) + timedelta(hours=1),
+        expires_at=datetime.now(tz=UTC) + timedelta(hours=1),
     )
     storage = InMemoryStorage(token=valid)
     http = httpx.Client()
