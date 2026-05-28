@@ -5,10 +5,10 @@ from datetime import datetime, timedelta, timezone
 import httpx
 import pytest
 
-from t1envios.core.auth.authenticator import Authenticator
-from t1envios.core.auth.token import Token
-from t1envios.core.config import Endpoints
-from t1envios.core.exceptions import AuthError, SessionExpiredError
+from t1shipments.core.auth.authenticator import Authenticator
+from t1shipments.core.auth.token import Token
+from t1shipments.core.config import Endpoints
+from t1shipments.core.exceptions import AuthError, SessionExpiredError
 
 from conftest import InMemoryStorage, load_fixture
 
@@ -107,7 +107,7 @@ def test_401_triggers_refresh_then_retry(httpx_mock, endpoints):
         json={"success": True, "detail": {"monto_actual": 100.0, "currency": "MXN", "credito": False}},
     )
 
-    from t1envios.core.api.balance import BalanceResource
+    from t1shipments.core.api.balance import BalanceResource
 
     valid = Token(
         access_token="old-valid",

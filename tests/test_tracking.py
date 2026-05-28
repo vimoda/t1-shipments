@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from t1envios.core.exceptions import ApiError
+from t1shipments.core.exceptions import ApiError
 
 from conftest import load_fixture
 

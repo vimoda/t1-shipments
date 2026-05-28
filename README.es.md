@@ -1,31 +1,31 @@
 # T1Shipments
 
-> **Disclaimer:** This is an unofficial, community-built SDK. It is not affiliated with or endorsed by T1Envios.
+> **Aviso:** Este es un SDK no oficial, construido por la comunidad. No está afiliado ni respaldado por T1Envios.
 
-Python SDK, CLI, and MCP Server for the [T1Envios](https://t1envios.com) API. Quote shipments, generate guides, schedule pickups, and track packages.
+SDK de Python, CLI y Servidor MCP para la API de [T1Envios](https://t1envios.com). Cotiza envíos, genera guías, programa recolecciones y rastrea paquetes.
 
-[Leer en español](README.es.md)
+[Read in English](README.md)
 
-## Tools / Features
+## Herramientas / Funcionalidades
 
-| Tool | Package | Description |
-|------|---------|-------------|
-| SDK (`T1Client`) | `t1-shipments-core` | Programmatic Python SDK |
-| CLI (`t1`) | `t1-shipments-cli` | Terminal interface |
-| MCP server | `t1-shipments-mcp` | MCP server for AI agents |
+| Herramienta | Paquete | Descripción |
+|-------------|---------|-------------|
+| SDK (`T1Client`) | `t1-shipments-core` | SDK programático de Python |
+| CLI (`t1`) | `t1-shipments-cli` | Interfaz de terminal |
+| Servidor MCP | `t1-shipments-mcp` | Servidor MCP para agentes de IA |
 
 ---
 
-## Installation options
+## Opciones de instalación
 
-### Option 1 — uvx from GitHub (recommended, no cloning)
+### Opción 1 — uvx desde GitHub (recomendado, sin clonar)
 
 ```bash
-# Run directly (no install needed)
+# Ejecuta directamente (sin instalar)
 uvx --from "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp" t1shipments-mcp
 ```
 
-MCP client configuration:
+Configuración para el cliente MCP:
 
 ```json
 {
@@ -52,7 +52,7 @@ MCP client configuration:
 }
 ```
 
-Point to a specific tag / commit / branch:
+Apuntar a un tag / commit / rama específico:
 
 ```json
 "args": ["--from", "git+https://github.com/vimoda/t1-shipments@v0.1.0#subdirectory=packages/mcp", "t1shipments-mcp"]
@@ -60,15 +60,15 @@ Point to a specific tag / commit / branch:
 
 ---
 
-### Option 2 — From source code (clone the repo)
+### Opción 2 — Desde el código fuente (clonar el repo)
 
 ```bash
 git clone https://github.com/vimoda/t1-shipments
 cd t1-shipments
-uv sync                # installs everything in the workspace
+uv sync                # instala todo el workspace
 ```
 
-MCP client configuration:
+Configuración para el cliente MCP:
 
 ```json
 {
@@ -77,7 +77,7 @@ MCP client configuration:
       "command": "uv",
       "args": [
         "--directory",
-        "/path/to/t1-shipments",
+        "/ruta/a/t1-shipments",
         "run",
         "python",
         "-m",
@@ -100,18 +100,18 @@ MCP client configuration:
 
 ---
 
-### Option 3 — pip install from GitHub (without uv)
+### Opción 3 — pip install desde GitHub (sin uv)
 
 ```bash
 # SDK
 pip install "t1-shipments-core @ git+https://github.com/vimoda/t1-shipments#subdirectory=packages/core"
 # CLI
 pip install "t1-shipments-cli @ git+https://github.com/vimoda/t1-shipments#subdirectory=packages/cli"
-# MCP server
+# Servidor MCP
 pip install "t1-shipments-mcp @ git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp"
 ```
 
-After installing the MCP package:
+Después de instalar el paquete MCP:
 
 ```json
 {
@@ -135,29 +135,29 @@ After installing the MCP package:
 
 ---
 
-### Option 4 — Automated script
+### Opción 4 — Script automático
 
 ```bash
-# MCP server only
+# Solo servidor MCP
 curl -fsSL https://raw.githubusercontent.com/vimoda/t1-shipments/main/install.sh | bash -s mcp
 
-# CLI only
+# Solo CLI
 curl -fsSL https://raw.githubusercontent.com/vimoda/t1-shipments/main/install.sh | bash -s cli
 
-# Both
+# Ambos
 curl -fsSL https://raw.githubusercontent.com/vimoda/t1-shipments/main/install.sh | bash -s all
 ```
 
 ---
 
-### Option 5 — From PyPI (when published)
+### Opción 5 — Desde PyPI (cuando se publique)
 
 ```bash
 pip install t1-shipments-cli
 uv add t1-shipments-cli
 ```
 
-MCP client (pointing directly to installed binary):
+Cliente MCP (apuntando al binario instalado):
 
 ```json
 {
@@ -181,53 +181,53 @@ MCP client (pointing directly to installed binary):
 
 ---
 
-### Config file locations
+### Ubicación de archivos de configuración
 
-| Client | Config file |
-|--------|-------------|
+| Cliente | Archivo |
+|---------|---------|
 | Claude Desktop (macOS) | `~/Library/Application Support/Claude/claude_desktop_config.json` |
 | Claude Desktop (Windows) | `%APPDATA%\Claude\claude_desktop_config.json` |
-| Claude Code | `.claude/mcp_config.json` in your project |
+| Claude Code | `.claude/mcp_config.json` en tu proyecto |
 
-### Test the installation
+### Probar la instalación
 
 ```bash
-# With MCP Inspector (interactive UI)
+# Con MCP Inspector (UI interactiva)
 npx @modelcontextprotocol/inspector uvx --from "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp" t1shipments-mcp
 
-# Or if installed locally
+# O si instalaste localmente
 npx @modelcontextprotocol/inspector t1shipments-mcp
 ```
 
 ---
 
-## Configuration
+## Configuración
 
-Set environment variables (or use a `.env` file):
+Establece las variables de entorno (o usa un archivo `.env`):
 
 ```env
-T1_CLIENT_ID=your_client_id
-T1_CLIENT_SECRET=your_client_secret
+T1_CLIENT_ID=tu_client_id
+T1_CLIENT_SECRET=tu_client_secret
 T1_BASE_URL=https://api.t1envios.com
-T1_SHOP_ID=your_shop_id
+T1_SHOP_ID=tu_tienda_id
 ```
 
-| Variable | Required | Default | Description |
+| Variable | Requerida | Default | Descripción |
 |---|---|---|---|
-| `T1_CLIENT_ID` | Yes | — | Keycloak client ID |
-| `T1_CLIENT_SECRET` | Yes | — | Keycloak client secret |
-| `T1_BASE_URL` | No | `https://api.t1envios.com` | API base URL |
-| `T1_SHOP_ID` | No | — | Commerce ID — sent as `comercio_id` on every request |
-| `T1_USERNAME` | No | — | T1Envios account email (auto-login in MCP) |
-| `T1_PASSWORD` | No | — | T1Envios account password |
-| `T1_ENV` | No | `dev` | `dev` or `prod` |
-| `T1_COMERCE_ID` | No | — | Internal commerce identifier |
-| `T1_LOG_LEVEL` | No | — | Logging level (e.g., `DEBUG`) |
-| `T1_TIMEOUT` | No | `30.0` | HTTP timeout in seconds |
+| `T1_CLIENT_ID` | Sí | — | ID de cliente Keycloak |
+| `T1_CLIENT_SECRET` | Sí | — | Secreto de cliente Keycloak |
+| `T1_BASE_URL` | No | `https://api.t1envios.com` | URL base de la API |
+| `T1_SHOP_ID` | No | — | ID de comercio — se envía como `comercio_id` |
+| `T1_USERNAME` | No | — | Correo de cuenta T1Envios (auto-login en MCP) |
+| `T1_PASSWORD` | No | — | Contraseña de cuenta T1Envios |
+| `T1_ENV` | No | `dev` | `dev` o `prod` |
+| `T1_COMERCE_ID` | No | — | Identificador interno de comercio |
+| `T1_LOG_LEVEL` | No | — | Nivel de logging (ej: `DEBUG`) |
+| `T1_TIMEOUT` | No | `30.0` | Timeout HTTP en segundos |
 
 ---
 
-## Quick Start
+## Inicio rápido
 
 ### SDK
 ```python
@@ -241,7 +241,7 @@ with T1Client(client_id="...", client_secret="...") as client:
 
 ### CLI
 ```bash
-t1 auth login          # Prompt for credentials
+t1 auth login          # Pide credenciales
 t1 quote --from-zip 02719 --to-zip 40900 --weight 1
 t1 balance
 ```
@@ -253,9 +253,9 @@ t1 mcp run
 
 ---
 
-## SDK Usage
+## Uso del SDK
 
-All public types are importable from their respective subpackages:
+Todos los tipos públicos se importan desde sus respectivos subpaquetes:
 
 ```python
 from t1shipments.core.client import T1Client
@@ -267,22 +267,22 @@ from t1shipments.core.models.tracking import TrackingResponse, TrackingState
 from t1shipments.core.exceptions import SessionExpiredError, ApiError
 ```
 
-### Authentication
+### Autenticación
 
 ```python
 from t1shipments.core.client import T1Client
 
-# Login with username and password (required for all operations)
+# Inicia sesión con usuario y contraseña (requerido para todas las operaciones)
 client = T1Client(client_id="...", client_secret="...")
 client.login("username", "password")
 
-# Or use context manager
+# O usa el context manager
 with T1Client(client_id="...", client_secret="...") as client:
     client.login("username", "password")
-    # ... use client
+    # ... usa el cliente
 ```
 
-### Quote and Create Shipment
+### Cotizar y Crear Guía
 
 ```python
 from t1shipments.core.client import T1Client
@@ -292,7 +292,7 @@ from t1shipments.core.models.shipment import ShipmentRequest
 with T1Client(client_id="...", client_secret="...", shop_id="...") as client:
     client.login("username", "password")
 
-    # 1. Get shipping quote
+    # 1. Cotizar envío
     response = client.quote(QuoteRequest(
         origin_postal_code="02719",
         destination_postal_code="40900",
@@ -302,13 +302,13 @@ with T1Client(client_id="...", client_secret="...", shop_id="...") as client:
         packages=1,
         shipping_days=2,
         insurance=False,
-        package_type=2,  # 1=Envelope, 2=Parcel
+        package_type=2,  # 1=Sobre, 2=Paquete
     ))
 
-    # Pick a rate by token
+    # Elige una tarifa por token
     quote_token = response.detail[0]["token"]
 
-    # 2. Create shipment
+    # 2. Crear guía
     shipment = client.create_shipment(ShipmentRequest(
         quote_token=quote_token,
         content="Ropa",
@@ -337,15 +337,15 @@ with T1Client(client_id="...", client_secret="...", shop_id="...") as client:
         packages=1,
     ))
 
-    print(f"Tracking number: {shipment.tracking_number}")
+    print(f"Número de guía: {shipment.tracking_number}")
 
-    # 3. Download label PDF
+    # 3. Descargar etiqueta PDF
     pdf = client.download_label(shipment.label_url)
     with open("label.pdf", "wb") as f:
         f.write(pdf)
 ```
 
-### Tracking
+### Rastreo
 
 ```python
 from t1shipments.core.client import T1Client
@@ -353,18 +353,18 @@ from t1shipments.core.client import T1Client
 with T1Client(client_id="...", client_secret="...") as client:
     client.login("username", "password")
 
-    # Current status + history
+    # Estado actual + historial
     state = client.track_state("1373188795")
     print(state.current_status)
     for event in state.history:
         print(event.date, event.description)
 
-    # Full carrier detail
+    # Detalle completo de la paquetería
     detail = client.track_detail("1373188795")
     print(detail.detail)
 ```
 
-### Balance and Carriers
+### Saldo y Paqueterías
 
 ```python
 from t1shipments.core.client import T1Client
@@ -373,16 +373,16 @@ with T1Client(client_id="...", client_secret="...") as client:
     client.login("username", "password")
 
     balance = client.balance()
-    print(f"Balance: {balance.amount} {balance.currency}")
+    print(f"Saldo: {balance.amount} {balance.currency}")
 
     carriers = client.list_carriers()
     for c in carriers:
         print(c.name, c.services)
 ```
 
-### Schedule Pickup
+### Programar Recolección
 
-> The origin address must be registered in T1Envios before scheduling a pickup.
+> La dirección de origen debe estar registrada en T1Envios antes de programar una recolección.
 
 ```python
 from t1shipments.core.client import T1Client
@@ -413,36 +413,36 @@ with T1Client(client_id="...", client_secret="...") as client:
         open_time="09:00",
         close_time="18:00",
     ))
-    print(f"Pickup scheduled: {pickup}")
+    print(f"Recolección programada: {pickup}")
 ```
 
-### Token Storage
+### Almacenamiento de Token
 
-By default `T1Client` uses in-memory storage (token is lost when the process exits). For persistent sessions use `HybridStorage`, which tries `keyring` first and falls back to `~/.t1shipments/credentials.json`:
+Por defecto `T1Client` usa almacenamiento en memoria (el token se pierde al salir del proceso). Para sesiones persistentes usa `HybridStorage`, que intenta `keyring` primero y falla a `~/.t1shipments/credentials.json`:
 
 ```python
 from t1shipments.core.client import T1Client
 from t1shipments.core.auth.storage import HybridStorage, InMemoryStorage
 
-# Persistent (default for CLI)
+# Persistente (por defecto en CLI)
 client = T1Client(..., token_storage=HybridStorage())
 
-# In-memory — useful for scripts, serverless, or tests
+# En memoria — útil para scripts, serverless o pruebas
 client = T1Client(..., token_storage=InMemoryStorage())
 ```
 
-### Load Config from Environment
+### Cargar Config desde el Entorno
 
 ```python
 from t1shipments.core.client import T1Client
 
-# Reads T1_CLIENT_ID, T1_CLIENT_SECRET, T1_SHOP_ID, etc. from env / .env
+# Lee T1_CLIENT_ID, T1_CLIENT_SECRET, T1_SHOP_ID, etc. de env / .env
 with T1Client.from_settings() as client:
     client.login("username", "password")
     print(client.balance())
 ```
 
-### Exception Handling
+### Manejo de Excepciones
 
 ```python
 from t1shipments.core.client import T1Client
@@ -453,44 +453,44 @@ with T1Client(client_id="...", client_secret="...") as client:
         client.login("username", "password")
         balance = client.balance()
     except SessionExpiredError:
-        # Token expired and refresh failed — re-login required
+        # Token expiró y falló el refresh — re-login requerido
         client.login("username", "password")
     except InsufficientBalanceError:
-        print("Not enough balance to create shipment")
+        print("Saldo insuficiente para crear el envío")
     except ApiError as e:
-        print(f"API error {e.status}: {e}")
+        print(f"Error de API {e.status}: {e}")
 ```
 
-Exception hierarchy:
+Jerarquía de excepciones:
 
 ```
 T1Error
 ├── AuthError
-│   ├── SessionExpiredError   # no valid session / refresh failed
-│   └── RefreshExpiredError   # refresh token itself expired
-├── ApiError                  # non-2xx HTTP response
+│   ├── SessionExpiredError   # sin sesión válida / refresh falló
+│   └── RefreshExpiredError   # el refresh token mismo expiró
+├── ApiError                  # respuesta HTTP no-2xx
 ├── RateLimitError            # HTTP 429
-├── StorageError              # token storage backend unavailable
-├── ConfigError               # missing or invalid configuration
-├── QuotaExceededError        # account quota exceeded
-├── InvalidAddressError       # address validation failed
-├── CarrierUnavailableError   # carrier or service not available
-└── InsufficientBalanceError  # account balance too low
+├── StorageError              # backend de almacenamiento no disponible
+├── ConfigError               # configuración faltante o inválida
+├── QuotaExceededError        # cuota de cuenta excedida
+├── InvalidAddressError       # validación de dirección falló
+├── CarrierUnavailableError   # paquetería o servicio no disponible
+└── InsufficientBalanceError  # saldo de cuenta insuficiente
 ```
 
 ---
 
-## CLI Usage
+## Uso del CLI
 
-### Authentication
+### Autenticación
 
 ```bash
-t1 auth login      # Prompt for username and password
-t1 auth logout     # Clear stored token
-t1 auth status     # Show current token status
+t1 auth login      # Pide usuario y contraseña
+t1 auth logout     # Limpia el token almacenado
+t1 auth status     # Muestra el estado del token
 ```
 
-### Quote
+### Cotizar
 
 ```bash
 t1 quote \
@@ -499,11 +499,11 @@ t1 quote \
   --package-value 500 --packages 1
 ```
 
-### Create Shipment
+### Crear Guía
 
 ```bash
 t1 create-shipment \
-  --quote-id <TOKEN_FROM_QUOTE> \
+  --quote-id <TOKEN_DE_COTIZACION> \
   --content "Ropa" \
   --origin-name "Juan" --origin-last-name "Pérez" \
   --origin-email "juan@example.com" \
@@ -523,22 +523,22 @@ t1 create-shipment \
   --destination-zip-code 40900
 ```
 
-### Download Label
+### Descargar Etiqueta
 
 ```bash
-t1 label --guide-link "https://..." --output label.pdf
+t1 label --guide-link "https://..." --output etiqueta.pdf
 ```
 
-### Track Shipment
+### Rastrear Guía
 
 ```bash
-t1 trackstate  --guide 1373188795   # Current status + history
-t1 trackdetail --guide 1373188795   # Full carrier detail
+t1 trackstate  --guide 1373188795   # Estado actual + historial
+t1 trackdetail --guide 1373188795   # Detalle completo de paquetería
 ```
 
-### Schedule Pickup
+### Programar Recolección
 
-> The origin address must be registered in T1Envios before scheduling a pickup.
+> La dirección de origen debe estar registrada en T1Envios antes de programar una recolección.
 
 ```bash
 t1 pickup \
@@ -557,59 +557,59 @@ t1 pickup \
   --open-time "09:00" --close-time "18:00"
 ```
 
-### Other Commands
+### Otros Comandos
 
 ```bash
-t1 balance       # Account balance
-t1 carriers      # List available carriers
-t1 mcp run       # Start MCP server
+t1 balance       # Saldo de cuenta
+t1 carriers      # Lista paqueterías disponibles
+t1 mcp run       # Inicia el servidor MCP
 ```
 
 ---
 
-## MCP Server
+## Servidor MCP
 
-T1Shipments ships an [MCP](https://modelcontextprotocol.io) server compatible with any MCP client (Claude Desktop, opencode, Cursor, IDE plugins, custom stdio clients, etc.).
+T1Shipments incluye un servidor [MCP](https://modelcontextprotocol.io) compatible con cualquier cliente MCP (Claude Desktop, opencode, Cursor, plugins de IDE, clientes stdio personalizados, etc.).
 
-### Auth & Token Lifecycle
+### Auth y Ciclo de Vida del Token
 
-The server keeps a **single `T1Client` instance** alive for the entire MCP session. Before every tool call it calls `ensure_valid()`:
+El servidor mantiene una **única instancia de `T1Client`** durante toda la sesión MCP. Antes de cada llamada a herramienta ejecuta `ensure_valid()`:
 
-1. Token valid → proceeds immediately.
-2. Token expires within 60 s → **refresh** using `refresh_token` (no re-login needed).
-3. No session / refresh expired → **re-login** with `T1_USERNAME`/`T1_PASSWORD`.
+1. Token válido → procede inmediatamente.
+2. Token expira en menos de 60 s → **refresca** usando `refresh_token` (sin re-login).
+3. Sin sesión / refresh expirado → **re-login** con `T1_USERNAME`/`T1_PASSWORD`.
 
-No manual intervention is required at any point.
+No se requiere intervención manual en ningún momento.
 
-### Testing with MCP Inspector
+### Pruebas con MCP Inspector
 
 ```bash
-# requires mcp[cli] — already included in the mcp extra
+# requiere mcp[cli] — ya incluido en el extra mcp
 uv run mcp dev src/t1shipments/mcp/server.py
 ```
 
-Opens a local web inspector where you can invoke tools interactively.
+Abre un inspector web local donde puedes invocar herramientas interactivamente.
 
-### Starting the Server (production)
+### Iniciar el Servidor (producción)
 
 ```bash
 t1 mcp run
-# or
+# o
 python -m t1shipments.mcp.server
 ```
 
-### Available Tools
+### Herramientas Disponibles
 
-| Tool | Description |
-|------|-------------|
-| `quote_shipment` | Get available shipping rates for a package. Returns a list of carrier options with prices. Always call this BEFORE `create_shipment`. |
-| `create_shipment` | Create a shipment using a quote token from `quote_shipment`. |
-| `track_guide` | Track a shipment by guide number. Returns current status, estimated delivery date, and history. |
-| `get_balance` | Get the current account balance in MXN. |
-| `list_carriers` | List all shipping carriers and services available in your T1Envios account. |
-| `schedule_pickup` | Schedule a pickup for an existing shipment. |
+| Herramienta | Descripción |
+|-------------|-------------|
+| `quote_shipment` | Obtén tarifas de envío disponibles para un paquete. Devuelve una lista de opciones de paquetería con precios. Llama esto SIEMPRE antes de `create_shipment`. |
+| `create_shipment` | Crea un envío usando un token de cotización de `quote_shipment`. |
+| `track_guide` | Rastrea un envío por número de guía. Devuelve estado actual, fecha estimada de entrega e historial. |
+| `get_balance` | Obtén el saldo actual de la cuenta en MXN. |
+| `list_carriers` | Lista todas las paqueterías y servicios disponibles en tu cuenta T1Envios. |
+| `schedule_pickup` | Programa una recolección para un envío existente. |
 
-### MCP Tool Input Schemas
+### Esquemas de Entrada de Herramientas MCP
 
 **quote_shipment:**
 ```json
@@ -656,7 +656,7 @@ python -m t1shipments.mcp.server
 
 ---
 
-## Development
+## Desarrollo
 
 ```bash
 uv sync --extra dev
@@ -666,6 +666,6 @@ uv run ruff format src/ tests/
 uv run mypy src/
 ```
 
-## License
+## Licencia
 
 MIT

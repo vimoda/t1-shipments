@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from t1envios.core.models.tracking import PickupRequest
+from t1shipments.core.models.tracking import PickupRequest
 
 from conftest import load_fixture
 

@@ -13,7 +13,7 @@ from .token import Token
 if TYPE_CHECKING:
     from ..config import Endpoints
 
-log = logging.getLogger("t1envios.auth")
+log = logging.getLogger("t1shipments.auth")
 
 
 class Authenticator:

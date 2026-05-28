@@ -5,11 +5,11 @@ from http.cookies import _quote
 import json
 import sys
 
-from t1envios.core.client import T1Client
-from t1envios.core.exceptions import ApiError
-from t1envios.core.models.quote import QuoteRequest
-from t1envios.core.models.shipment import ShipmentRequest
-from t1envios.core.utils.logging import configure_logging
+from t1shipments.core.client import T1Client
+from t1shipments.core.exceptions import ApiError
+from t1shipments.core.models.quote import QuoteRequest
+from t1shipments.core.models.shipment import ShipmentRequest
+from t1shipments.core.utils.logging import configure_logging
 
 configure_logging("DEBUG")
 

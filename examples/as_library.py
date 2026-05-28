@@ -1,6 +1,9 @@
-"""Example: using t1envios as an importable SDK."""
+"""Example: using t1shipments as an importable SDK."""
 
-from t1envios import T1Client, Endpoints, QuoteRequest, PickupRequest
+from t1shipments.core.client import T1Client
+from t1shipments.core.config import Endpoints
+from t1shipments.core.models.quote import QuoteRequest
+from t1shipments.core.models.tracking import PickupRequest
 
 # Direct credentials + custom base URL
 client = T1Client(

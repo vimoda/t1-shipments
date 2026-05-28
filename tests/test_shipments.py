@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from t1envios.core.models.shipment import ShipmentRequest
+from t1shipments.core.models.shipment import ShipmentRequest
 
 from conftest import load_fixture
 

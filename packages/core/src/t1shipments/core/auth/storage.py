@@ -9,7 +9,7 @@ from typing import Protocol
 from ..exceptions import StorageError
 from .token import Token
 
-_SERVICE_NAME = "t1envios"
+_SERVICE_NAME = "t1shipments"
 _ACCOUNT_NAME = "default"
 
 
@@ -57,7 +57,7 @@ class KeyringStorage:
 
 class FileStorage:
     def __init__(self, path: Path | None = None) -> None:
-        self._path = path or (Path.home() / ".t1envios" / "credentials.json")
+        self._path = path or (Path.home() / ".t1shipments" / "credentials.json")
 
     def save(self, token: Token) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)

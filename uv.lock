@@ -6,6 +6,22 @@ resolution-markers = [
     "python_full_version < '3.15'",
 ]
 
+[manifest]
+members = [
+    "t1-shipments-cli",
+    "t1-shipments-core",
+    "t1-shipments-mcp",
+]
+
+[manifest.dependency-groups]
+dev = [
+    { name = "mypy" },
+    { name = "pytest", specifier = ">=8" },
+    { name = "pytest-cov" },
+    { name = "pytest-httpx", specifier = ">=0.30" },
+    { name = "ruff" },
+]
+
 [[package]]
 name = "annotated-doc"
 version = "0.0.4"
@@ -1159,56 +1175,55 @@ wheels = [
 ]
 
 [[package]]
-name = "t1envios"
+name = "t1-shipments-cli"
 version = "0.1.0"
-source = { editable = "." }
+source = { editable = "packages/cli" }
 dependencies = [
-    { name = "httpx" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
+    { name = "rich" },
+    { name = "t1-shipments-core" },
+    { name = "typer" },
 ]
 
-[package.optional-dependencies]
-cli = [
-    { name = "keyring" },
-    { name = "rich" },
-    { name = "typer" },
+[package.metadata]
+requires-dist = [
+    { name = "rich", specifier = ">=15.0.0" },
+    { name = "t1-shipments-core", editable = "packages/core" },
+    { name = "typer", specifier = ">=0.24.2" },
 ]
-dev = [
+
+[[package]]
+name = "t1-shipments-core"
+version = "0.1.0"
+source = { editable = "packages/core" }
+dependencies = [
+    { name = "httpx" },
     { name = "keyring" },
-    { name = "mcp" },
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-httpx" },
-    { name = "rich" },
-    { name = "ruff" },
-    { name = "typer" },
-]
-mcp = [
-    { name = "mcp" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "keyring", marker = "extra == 'cli'", specifier = ">=25.7.0" },
-    { name = "keyring", marker = "extra == 'dev'", specifier = ">=25.7.0" },
-    { name = "mcp", marker = "extra == 'dev'", specifier = ">=1.27.0" },
-    { name = "mcp", marker = "extra == 'mcp'", specifier = ">=1.27.0" },
-    { name = "mypy", marker = "extra == 'dev'" },
+    { name = "keyring", specifier = ">=25.7.0" },
     { name = "pydantic", specifier = ">=2.13.3" },
     { name = "pydantic-settings", specifier = ">=2.14.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
-    { name = "pytest-cov", marker = "extra == 'dev'" },
-    { name = "pytest-httpx", marker = "extra == 'dev'", specifier = ">=0.30" },
-    { name = "rich", marker = "extra == 'cli'", specifier = ">=15.0.0" },
-    { name = "rich", marker = "extra == 'dev'", specifier = ">=15.0.0" },
-    { name = "ruff", marker = "extra == 'dev'" },
-    { name = "typer", extras = ["all"], marker = "extra == 'cli'", specifier = ">=0.24.2" },
-    { name = "typer", extras = ["all"], marker = "extra == 'dev'", specifier = ">=0.24.2" },
 ]
-provides-extras = ["cli", "mcp", "dev"]
+
+[[package]]
+name = "t1-shipments-mcp"
+version = "0.1.0"
+source = { editable = "packages/mcp" }
+dependencies = [
+    { name = "mcp" },
+    { name = "t1-shipments-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "mcp", specifier = ">=1.27.0" },
+    { name = "t1-shipments-core", editable = "packages/core" },
+]
 
 [[package]]
 name = "tomli"

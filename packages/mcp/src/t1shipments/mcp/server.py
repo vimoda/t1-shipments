@@ -15,7 +15,7 @@ from .tools import auth as auth_tools
 from .tools import carriers as carriers_tools
 from .tools import shipments as shipment_tools
 
-server = Server("t1envios")
+server = Server("t1shipments")
 
 # Singleton — shared across all tool calls to reuse httpx.Client and in-memory token.
 _CLIENT: T1Client | None = None
@@ -64,6 +64,23 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
 
 
 def main() -> None:
+    """Entry point for uvx / pip install t1-shipments-mcp."""
+    import sys
+
+    try:
+        from t1shipments.core.config import Settings
+
+        Settings()  # validates required env vars via pydantic-settings
+    except Exception:
+        print(
+            "❌ Faltan variables de entorno requeridas:\n"
+            "   T1_CLIENT_ID, T1_CLIENT_SECRET\n\n"
+            "Opcionales: T1_BASE_URL, T1_SHOP_ID, T1_USERNAME, T1_PASSWORD, T1_TIMEOUT\n\n"
+            "Agrega estas variables al bloque 'env' de tu configuración MCP.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     import asyncio
 
     async def _run() -> None:
@@ -72,7 +89,7 @@ def main() -> None:
                 read,
                 write,
                 InitializationOptions(
-                    server_name="t1envios",
+                    server_name="t1shipments",
                     server_version="0.1.0",
                     capabilities=server.get_capabilities(
                         notification_options=NotificationOptions(),

@@ -4,7 +4,7 @@ try:
     import typer
 except ImportError as exc:
     raise ImportError(
-        "CLI extras not installed. Run: pip install t1envios[cli]"
+        "CLI extras not installed. Run: pip install t1-shipments-cli"
     ) from exc
 
 from . import auth, mcp_cmd

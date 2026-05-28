@@ -35,9 +35,9 @@ def install() -> None:
             config = {}
 
     config.setdefault("mcpServers", {})
-    config["mcpServers"]["t1envios"] = {
+    config["mcpServers"]["t1shipments"] = {
         "command": sys.executable,
-        "args": ["-m", "t1envios.mcp.server"],
+        "args": ["-m", "t1shipments.mcp.server"],
         "env": {
             "T1_CLIENT_ID": "${T1_CLIENT_ID}",
             "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
@@ -56,6 +56,6 @@ def run_server() -> None:
     try:
         from ..mcp.server import main
     except ImportError:
-        rprint("[red]Error:[/red] MCP extra not installed. Run: pip install t1envios[mcp]")
+        rprint("[red]Error:[/red] MCP extra not installed. Run: pip install t1-shipments-mcp")
         raise typer.Exit(1)
     main()

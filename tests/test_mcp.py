@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from t1envios.mcp import prompts as prompts_module
-from t1envios.mcp import resources as resources_module
-from t1envios.mcp.tools import auth as auth_tools_module
+from t1shipments.mcp import prompts as prompts_module
+from t1shipments.mcp import resources as resources_module
+from t1shipments.mcp.tools import auth as auth_tools_module
 
 from conftest import load_fixture
 
@@ -127,8 +127,8 @@ class TestPrompts:
 class TestResources:
     def test_static_resources_listed(self):
         uris = {str(r.uri) for r in resources_module._STATIC_RESOURCES}
-        assert "t1envios://balance" in uris
-        assert "t1envios://carriers" in uris
+        assert "t1shipments://balance" in uris
+        assert "t1shipments://carriers" in uris
 
     def test_shipment_template_uri(self):
         assert "{guide}" in resources_module._SHIPMENT_TEMPLATE.uriTemplate
@@ -138,7 +138,7 @@ class TestResources:
             url="https://api.example.com/balance/consult",
             json=load_fixture("balance"),
         )
-        contents = resources_module._read("t1envios://balance", lambda: client)
+        contents = resources_module._read("t1shipments://balance", lambda: client)
         assert len(contents) == 1
         import json
         data = json.loads(contents[0].text)
@@ -149,7 +149,7 @@ class TestResources:
             url="https://api.example.com/carriers",
             json=load_fixture("carriers"),
         )
-        contents = resources_module._read("t1envios://carriers", lambda: client)
+        contents = resources_module._read("t1shipments://carriers", lambda: client)
         import json
         data = json.loads(contents[0].text)
         assert len(data["carriers"]) == 3
@@ -159,14 +159,14 @@ class TestResources:
             url="https://api.example.com/rastreo/detail-guia/GUIDE123",
             json=load_fixture("tracking_detail"),
         )
-        contents = resources_module._read("t1envios://shipment/GUIDE123", lambda: client)
+        contents = resources_module._read("t1shipments://shipment/GUIDE123", lambda: client)
         import json
         data = json.loads(contents[0].text)
         assert len(data["detail"]) == 1
 
     def test_unknown_resource_raises(self, client):
         with pytest.raises(ValueError, match="Unknown resource URI"):
-            resources_module._read("t1envios://unknown", lambda: client)
+            resources_module._read("t1shipments://unknown", lambda: client)
 
 
 # ---------------------------------------------------------------------------
@@ -179,7 +179,7 @@ class TestNewShipmentTools:
             url="https://api.example.com/rastreo/detail-guia/GUIDE123",
             json=load_fixture("tracking_detail"),
         )
-        from t1envios.mcp.tools import shipments as st
+        from t1shipments.mcp.tools import shipments as st
         result = st.handle("track_detail", {"guide": "GUIDE123"}, client)
         assert "detail" in result
         assert result["detail"][0]["code"] == "CR"
@@ -189,14 +189,14 @@ class TestNewShipmentTools:
             url="https://api.example.com/label/GUIDE123",
             content=b"%PDF-1.4 fake",
         )
-        from t1envios.mcp.tools import shipments as st
+        from t1shipments.mcp.tools import shipments as st
         result = st.handle("download_label", {"guide_link": "https://api.example.com/label/GUIDE123"}, client)
         assert result["content_type"] == "application/pdf"
         import base64
         assert base64.b64decode(result["data_base64"]) == b"%PDF-1.4 fake"
 
     def test_unknown_tool_raises(self, client):
-        from t1envios.mcp.tools import shipments as st
+        from t1shipments.mcp.tools import shipments as st
         with pytest.raises(ValueError, match="Unknown tool"):
             st.handle("nonexistent", {}, client)
 
@@ -207,7 +207,7 @@ class TestNewShipmentTools:
 
 class TestQuoteNormalization:
     def _make_resp(self, detail):
-        from t1envios.core.models.quote import QuoteResponse
+        from t1shipments.core.models.quote import QuoteResponse
         return QuoteResponse(success=True, detail=detail)
 
     def _flat_rate(self, **kwargs):
@@ -223,7 +223,7 @@ class TestQuoteNormalization:
         return base
 
     def test_basic_fields_exposed(self):
-        from t1envios.mcp.tools.shipments import _normalize_quote
+        from t1shipments.mcp.tools.shipments import _normalize_quote
         resp = self._make_resp([self._flat_rate(token="tok-x", carrier="FEDEX")])
         result = _normalize_quote(resp, insurance_requested=False)
         assert result["insurance_requested"] is False
@@ -243,7 +243,7 @@ class TestQuoteNormalization:
         assert "insurance_note" not in rate
 
     def test_insurance_applied_derives_insurance_cost(self):
-        from t1envios.mcp.tools.shipments import _normalize_quote
+        from t1shipments.mcp.tools.shipments import _normalize_quote
         resp = self._make_resp([self._flat_rate(insurance=True, cost=100.0, total_cost=120.0)])
         result = _normalize_quote(resp, insurance_requested=True)
         rate = result["rates"][0]
@@ -253,7 +253,7 @@ class TestQuoteNormalization:
         assert rate["total_cost"] == 120.0
 
     def test_insurance_requested_but_not_applied_adds_note(self):
-        from t1envios.mcp.tools.shipments import _normalize_quote
+        from t1shipments.mcp.tools.shipments import _normalize_quote
         resp = self._make_resp([self._flat_rate(insurance=False)])
         result = _normalize_quote(resp, insurance_requested=True)
         rate = result["rates"][0]
@@ -261,7 +261,7 @@ class TestQuoteNormalization:
         assert "insurance_cost" not in rate
 
     def test_no_insurance_path_omits_insurance_fields(self):
-        from t1envios.mcp.tools.shipments import _normalize_quote
+        from t1shipments.mcp.tools.shipments import _normalize_quote
         resp = self._make_resp([self._flat_rate(insurance=True, cost=100.0, total_cost=120.0)])
         result = _normalize_quote(resp, insurance_requested=False)
         rate = result["rates"][0]
@@ -269,7 +269,7 @@ class TestQuoteNormalization:
         assert "insurance_note" not in rate
 
     def test_rates_sorted_by_total_cost_with_recommended_first(self):
-        from t1envios.mcp.tools.shipments import _normalize_quote
+        from t1shipments.mcp.tools.shipments import _normalize_quote
         resp = self._make_resp([
             self._flat_rate(token="cheap", total_cost=80.0, cost=80.0, recommended=False),
             self._flat_rate(token="medium", total_cost=100.0, cost=100.0, recommended=True),
@@ -280,7 +280,7 @@ class TestQuoteNormalization:
         assert tokens == ["medium", "cheap", "expensive"]
 
     def test_rate_count_and_structure(self):
-        from t1envios.mcp.tools.shipments import _normalize_quote
+        from t1shipments.mcp.tools.shipments import _normalize_quote
         resp = self._make_resp([
             self._flat_rate(token="a", total_cost=100.0),
             self._flat_rate(token="b", total_cost=120.0),
@@ -290,7 +290,7 @@ class TestQuoteNormalization:
         assert len(result["rates"]) == 2
 
     def test_all_tools_list_length(self):
-        from t1envios.mcp.tools import shipments as st
+        from t1shipments.mcp.tools import shipments as st
         names = {t.name for t in st.ALL_TOOLS}
         assert "track_detail" in names
         assert "download_label" in names
@@ -374,8 +374,8 @@ class TestAutoRefresh:
 
     def test_ensure_valid_no_auto_refresh_raises_on_expired(self, client):
         from datetime import datetime, timezone
-        from t1envios.core.auth.token import Token
-        from t1envios.core.exceptions import SessionExpiredError
+        from t1shipments.core.auth.token import Token
+        from t1shipments.core.exceptions import SessionExpiredError
 
         client._auth.auto_refresh = False
         client._auth._token = Token(
@@ -388,7 +388,7 @@ class TestAutoRefresh:
 
     def test_ensure_valid_auto_refresh_true_refreshes(self, httpx_mock, client):
         from datetime import datetime, timezone
-        from t1envios.core.auth.token import Token
+        from t1shipments.core.auth.token import Token
 
         client._auth.auto_refresh = True
         client._auth._token = Token(

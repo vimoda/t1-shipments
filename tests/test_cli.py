@@ -6,10 +6,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from typer.testing import CliRunner
 
-from t1envios.core.auth.token import Token
-from t1envios.cli.app import app
-from t1envios.core.models.quote import QuoteResponse, Rate
-from t1envios.core.models.tracking import Balance, Carrier, TrackingResponse
+from t1shipments.core.auth.token import Token
+from t1shipments.cli.app import app
+from t1shipments.core.models.quote import QuoteResponse, Rate
+from t1shipments.core.models.tracking import Balance, Carrier, TrackingResponse
 
 runner = CliRunner()
 
@@ -22,7 +22,7 @@ def _valid_token() -> Token:
     )
 
 
-@patch("t1envios.cli.carriers.T1Client")
+@patch("t1shipments.cli.carriers.T1Client")
 def test_carriers_cmd(mock_cls):
     mock_client = MagicMock()
     mock_cls.from_settings.return_value.__enter__ = lambda s: mock_client
@@ -35,7 +35,7 @@ def test_carriers_cmd(mock_cls):
     assert "FedEx" in result.output
 
 
-@patch("t1envios.cli.shipments.T1Client")
+@patch("t1shipments.cli.shipments.T1Client")
 def test_balance_cmd(mock_cls):
     mock_client = MagicMock()
     mock_cls.from_settings.return_value.__enter__ = lambda s: mock_client
@@ -46,7 +46,7 @@ def test_balance_cmd(mock_cls):
     assert "500" in result.output
 
 
-@patch("t1envios.cli.shipments.T1Client")
+@patch("t1shipments.cli.shipments.T1Client")
 def test_track_cmd(mock_cls):
     mock_client = MagicMock()
     mock_cls.from_settings.return_value.__enter__ = lambda s: mock_client
@@ -56,7 +56,7 @@ def test_track_cmd(mock_cls):
     assert result.exit_code == 0
 
 
-@patch("t1envios.cli.shipments.T1Client")
+@patch("t1shipments.cli.shipments.T1Client")
 def test_quote_cmd(mock_cls):
     mock_client = MagicMock()
     mock_cls.from_settings.return_value.__enter__ = lambda s: mock_client
@@ -72,8 +72,8 @@ def test_quote_cmd(mock_cls):
     assert "FedEx" in result.output
 
 
-@patch("t1envios.cli.auth.T1Client")
-@patch("t1envios.cli.auth.Settings")
+@patch("t1shipments.cli.auth.T1Client")
+@patch("t1shipments.cli.auth.Settings")
 def test_auth_login(mock_settings_cls, mock_cls):
     mock_settings_cls.return_value.username = None
     mock_settings_cls.return_value.password = None
@@ -87,7 +87,7 @@ def test_auth_login(mock_settings_cls, mock_cls):
     mock_client.login.assert_called_once_with("user@example.com", "secret123", store_id=None)
 
 
-@patch("t1envios.cli.auth.HybridStorage")
+@patch("t1shipments.cli.auth.HybridStorage")
 def test_auth_status_not_authenticated(mock_storage_cls):
     mock_storage_cls.return_value.load.return_value = None
     result = runner.invoke(app, ["auth", "status"])
@@ -95,7 +95,7 @@ def test_auth_status_not_authenticated(mock_storage_cls):
     assert "Not authenticated" in result.output
 
 
-@patch("t1envios.cli.auth.HybridStorage")
+@patch("t1shipments.cli.auth.HybridStorage")
 def test_auth_status_valid(mock_storage_cls):
     mock_storage_cls.return_value.load.return_value = _valid_token()
     result = runner.invoke(app, ["auth", "status"])

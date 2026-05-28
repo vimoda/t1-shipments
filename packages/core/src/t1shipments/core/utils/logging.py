@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-_LOGGER_NAME = "t1envios"
+_LOGGER_NAME = "t1shipments"
 
 
 def get_logger(name: str = _LOGGER_NAME) -> logging.Logger:

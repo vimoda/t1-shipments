@@ -6,7 +6,7 @@ from ..exceptions import ApiError
 from ..models.shipment import Shipment, ShipmentRequest
 from .base import BaseResource
 
-log = logging.getLogger("t1envios.api")
+log = logging.getLogger("t1shipments.api")
 
 
 class ShipmentsResource(BaseResource):

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from t1envios.core.exceptions import ApiError
-from t1envios.core.models.quote import QuoteRequest
+from t1shipments.core.exceptions import ApiError
+from t1shipments.core.models.quote import QuoteRequest
 
 from conftest import load_fixture
 

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ..auth.authenticator import Authenticator
     from ..config import Endpoints
 
-log = logging.getLogger("t1envios.api")
+log = logging.getLogger("t1shipments.api")
 
 
 class BaseResource:
