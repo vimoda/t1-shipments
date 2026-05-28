@@ -101,7 +101,7 @@ TOOL_QUOTE = types.Tool(
             "package_type": {"type": "integer", "description": "1=Envelope/Sobre, 2=Parcel/Paquete (default 2)"},
         },
         "required": [
-            "origin_postal_code", "destination_postal_code", "weight", "insurance"
+            "origin_postal_code", "destination_postal_code", "weight", "insurance", "package_type", "packages",
         ],
     },
 )
@@ -156,7 +156,8 @@ TOOL_CREATE_SHIPMENT = types.Tool(
             "packages": {"type": "integer", "description": "Number of packages / Número de paquetes"},
         },
         "required": [
-            "quote_token", "content",
+            "quote_token",
+            "content",
             "origin_first_name", "origin_last_name", "origin_email",
             "origin_street", "origin_number", "origin_neighborhood",
             "origin_phone", "origin_state", "origin_municipality",

@@ -27,6 +27,7 @@ _PROMPTS: list[types.Prompt] = [
         arguments=[
             types.PromptArgument(name="quote_token", description="Selected rate token", required=True),
             types.PromptArgument(name="content", description="Package contents (max 25 chars)", required=False),
+            types.PromptArgument(name="package_type", description="Package type: 1=Envelope/Sobre, 2=Parcel/Paquete (default 2)", required=False),
             types.PromptArgument(name="use_stored_origin", description="Use stored origin address? true/false", required=False),
             types.PromptArgument(name="use_stored_destination", description="Use stored destination address? true/false", required=False),
         ],
@@ -43,6 +44,9 @@ _PROMPTS: list[types.Prompt] = [
             types.PromptArgument(name="length_cm", description="Length in cm", required=False),
             types.PromptArgument(name="insurance", description="With insurance? true/false", required=False),
             types.PromptArgument(name="package_value", description="Package value in MXN (required only if insurance)", required=False),
+            types.PromptArgument(name="packages", description="Number of packages (default 1)", required=False),
+            types.PromptArgument(name="package_type", description="Package type: 1=Envelope/Sobre, 2=Parcel/Paquete (default 2)", required=False),
+            types.PromptArgument(name="shipping_days", description="Days until shipment", required=False),
         ],
     ),
     types.Prompt(
@@ -51,6 +55,7 @@ _PROMPTS: list[types.Prompt] = [
         arguments=[
             types.PromptArgument(name="quote_token", description="Rate token (from /quote)", required=True),
             types.PromptArgument(name="content", description="Package contents, max 25 chars", required=False),
+            types.PromptArgument(name="package_type", description="Package type: 1=Envelope/Sobre, 2=Parcel/Paquete (default 2)", required=False),
         ],
     ),
     types.Prompt(
@@ -125,7 +130,6 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "If both are equal, say: 'Quoting with physical weight of X kg.' "
             "Then check your memory to see if those addresses are already saved. "
             "If they are not, ask the user: 'Do you want to save them?' "
-            "End with: 'Which service would you like to proceed with?' "
             "Respond in the same language the user is using."
         )
         return types.GetPromptResult(
@@ -141,11 +145,25 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         height = args.get("height_cm", "?")
         length = args.get("length_cm", "?")
         insurance = args.get("insurance", "false")
+        pkgs = args.get("packages", "1")
+        pkg_type = args.get("package_type", "2")
+        shipping_days = args.get("shipping_days", "?")
         text = (
             f"Quote a shipment from ZIP code {origin} to {dest}, "
             f"weight={weight} kg, "
             f"dimensions: width={width}cm, height={height}cm, length={length}cm, "
-            f"{'with' if str(insurance).lower() == 'true' else 'without'} insurance. "
+            f"{'with' if str(insurance).lower() == 'true' else 'without'} insurance, "
+            f"packages={pkgs}, package_type={pkg_type} ({'Envelope/Sobre' if pkg_type == '1' else 'Parcel/Paquete'}), "
+            f"shipping_days={shipping_days}. "
+            "BEFORE calling quote_shipment, request any missing data from the user ONE BY ONE. "
+            "Suggest examples for each: "
+            "- weight: 'e.g. 1.5 kg', "
+            "- dimensions: 'e.g. width=30cm, height=20cm, length=15cm' (defaults if not provided), "
+            "- insurance: 'Do you want insurance? (yes/no)', "
+            "- package_value: 'Declared value in MXN (required only if insurance is requested)', "
+            "- packages: 'How many packages? (default 1)', "
+            "- package_type: 'Package type: 1 = Envelope/Sobre, 2 = Parcel/Paquete (default 2)', "
+            "- shipping_days: 'How many days until you ship? (e.g. 0=today, 1=tomorrow, etc.)'. "
             "If dimensions were not provided, use defaults: width=30cm, height=20cm, length=15cm. "
             "Calculate volumetric weight = ceil(width × height × length / 5000). "
             "All weights are rounded UP to the nearest integer. "
@@ -174,11 +192,13 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
     if name == "create_shipment_with_stored_address":
         token = args.get("quote_token", "?")
         content = args.get("content", "Producto")
+        pkg_type = args.get("package_type", "2")
         use_origin = str(args.get("use_stored_origin", "false")).lower() == "true"
         use_dest = str(args.get("use_stored_destination", "false")).lower() == "true"
         text = (
             f"Create a shipment using the quote token: {token}. "
             f"Package contents: {content}. "
+            f"Package type: {pkg_type} ({'Envelope/Sobre' if pkg_type == '1' else 'Parcel/Paquete'}). "
             "If use_stored_origin is true, use the already stored origin address. "
             "If false, check your memory first (previous sessions). "
             "If there are saved addresses, offer them to the user. If not, request data ONE BY ONE: "
@@ -191,9 +211,10 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "If the user provides both, combine them in references separated by ' — ' "
             "(e.g. 'Apt 501 — next to the OXXO'). If it doesn't all fit, prioritize the interior detail. "
             "If neither is given, send ''. "
-            "⚠️ Also ask the user what the package contains (content, max 25 chars). "
-            "⚠️ guide_origin is not included (uses default). "
-            "Same for the recipient: if use_stored_destination is true, use the stored one; "
+            "⚠️ Also ask the user what the package contains (content, max 25 chars). Suggest examples: 'Ropa', 'Electrónicos', 'Documentos', 'Accesorios', etc. "
+            "⚠️ Ask for the package type. Accepted values: 1 = Envelope/Sobre, 2 = Parcel/Paquete (default). Suggest these options to the user. "
+             "⚠️ guide_origin is not included (uses default). "
+             "Same for the recipient: if use_stored_destination is true, use the stored one; "
              "if false, check memory and offer saved ones, or request data one by one. "
             "⚠️ WARNING: this operation has a monetary cost. Confirm with the user before proceeding. "
             "AFTER the guide: check if those addresses are already in your memory. "
@@ -210,9 +231,11 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
     if name == "ship":
         token = args.get("quote_token", "?")
         content = args.get("content", "Producto")
+        pkg_type = args.get("package_type", "2")
         text = (
             f"Create a shipment using the quote token: {token}. "
             f"Package contents: {content}. "
+            f"Package type: {pkg_type} ({'Envelope/Sobre' if pkg_type == '1' else 'Parcel/Paquete'}). "
             "BEFORE requesting data, check your memory (previous sessions). "
             "If the user has saved addresses, show them and ask if they want to reuse them or provide new data. "
             "If there are no saved addresses or they prefer new ones, request each field ONE BY ONE: "
@@ -226,9 +249,10 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "(e.g. 'Apt 501 — next to the OXXO'). If it doesn't all fit, prioritize the interior detail. "
             "If neither is given, send ''. "
             "Then do the same for the recipient. "
-            "⚠️ Also ask the user what the package contains (content, max 25 chars). "
-            "⚠️ guide_origin is not included (uses default). "
-            "⚠️ WARNING: this operation has a monetary cost. Confirm with the user before proceeding.\n"
+            "⚠️ Also ask the user what the package contains (content, max 25 chars). Suggest examples: 'Ropa', 'Electrónicos', 'Documentos', 'Accesorios', etc. "
+            "⚠️ Ask for the package type. Accepted values: 1 = Envelope/Sobre, 2 = Parcel/Paquete (default). Suggest these options to the user. "
+             "⚠️ guide_origin is not included (uses default). "
+             "⚠️ WARNING: this operation has a monetary cost. Confirm with the user before proceeding.\n"
             "AFTER the guide: check if those addresses are already in your memory. "
             "If they already exist: say 'I already have those addresses saved.' "
             "If not: ask 'Would you like to save them?' "
