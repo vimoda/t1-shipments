@@ -12,24 +12,54 @@ _PROMPTS: list[types.Prompt] = [
         description="Quick quote: origin ZIP, destination ZIP, weight, dimensions, and optional insurance.",
         arguments=[
             types.PromptArgument(name="origin_zip", description="Origin ZIP code", required=True),
-            types.PromptArgument(name="dest_zip", description="Destination ZIP code", required=True),
+            types.PromptArgument(
+                name="dest_zip", description="Destination ZIP code", required=True
+            ),
             types.PromptArgument(name="weight_kg", description="Weight in kg", required=True),
-            types.PromptArgument(name="width_cm", description="Width in cm (default 30)", required=False),
-            types.PromptArgument(name="height_cm", description="Height in cm (default 20)", required=False),
-            types.PromptArgument(name="length_cm", description="Length in cm (default 15)", required=False),
-            types.PromptArgument(name="insurance", description="With insurance? true/false", required=False),
-            types.PromptArgument(name="package_value", description="Package value in MXN (required only if insurance)", required=False),
+            types.PromptArgument(
+                name="width_cm", description="Width in cm (default 30)", required=False
+            ),
+            types.PromptArgument(
+                name="height_cm", description="Height in cm (default 20)", required=False
+            ),
+            types.PromptArgument(
+                name="length_cm", description="Length in cm (default 15)", required=False
+            ),
+            types.PromptArgument(
+                name="insurance", description="With insurance? true/false", required=False
+            ),
+            types.PromptArgument(
+                name="package_value",
+                description="Package value in MXN (required only if insurance)",
+                required=False,
+            ),
         ],
     ),
     types.Prompt(
         name="create_shipment_with_stored_address",
         description="Create a shipment using a quote_token and previously stored addresses.",
         arguments=[
-            types.PromptArgument(name="quote_token", description="Selected rate token", required=True),
-            types.PromptArgument(name="content", description="Package contents (max 25 chars)", required=False),
-            types.PromptArgument(name="package_type", description="Package type: 1=Envelope/Sobre, 2=Parcel/Paquete (default 2)", required=False),
-            types.PromptArgument(name="use_stored_origin", description="Use stored origin address? true/false", required=False),
-            types.PromptArgument(name="use_stored_destination", description="Use stored destination address? true/false", required=False),
+            types.PromptArgument(
+                name="quote_token", description="Selected rate token", required=True
+            ),
+            types.PromptArgument(
+                name="content", description="Package contents (max 25 chars)", required=False
+            ),
+            types.PromptArgument(
+                name="package_type",
+                description="Package type: 1=Envelope/Sobre, 2=Parcel/Paquete (default 2)",
+                required=False,
+            ),
+            types.PromptArgument(
+                name="use_stored_origin",
+                description="Use stored origin address? true/false",
+                required=False,
+            ),
+            types.PromptArgument(
+                name="use_stored_destination",
+                description="Use stored destination address? true/false",
+                required=False,
+            ),
         ],
     ),
     types.Prompt(
@@ -37,25 +67,49 @@ _PROMPTS: list[types.Prompt] = [
         description="Quote a full shipment between two ZIP codes.",
         arguments=[
             types.PromptArgument(name="origin_zip", description="Origin ZIP code", required=True),
-            types.PromptArgument(name="dest_zip", description="Destination ZIP code", required=True),
+            types.PromptArgument(
+                name="dest_zip", description="Destination ZIP code", required=True
+            ),
             types.PromptArgument(name="weight_kg", description="Weight in kg", required=True),
             types.PromptArgument(name="width_cm", description="Width in cm", required=False),
             types.PromptArgument(name="height_cm", description="Height in cm", required=False),
             types.PromptArgument(name="length_cm", description="Length in cm", required=False),
-            types.PromptArgument(name="insurance", description="With insurance? true/false", required=False),
-            types.PromptArgument(name="package_value", description="Package value in MXN (required only if insurance)", required=False),
-            types.PromptArgument(name="packages", description="Number of packages (default 1)", required=False),
-            types.PromptArgument(name="package_type", description="Package type: 1=Envelope/Sobre, 2=Parcel/Paquete (default 2)", required=False),
-            types.PromptArgument(name="shipping_days", description="Days until shipment", required=False),
+            types.PromptArgument(
+                name="insurance", description="With insurance? true/false", required=False
+            ),
+            types.PromptArgument(
+                name="package_value",
+                description="Package value in MXN (required only if insurance)",
+                required=False,
+            ),
+            types.PromptArgument(
+                name="packages", description="Number of packages (default 1)", required=False
+            ),
+            types.PromptArgument(
+                name="package_type",
+                description="Package type: 1=Envelope/Sobre, 2=Parcel/Paquete (default 2)",
+                required=False,
+            ),
+            types.PromptArgument(
+                name="shipping_days", description="Days until shipment", required=False
+            ),
         ],
     ),
     types.Prompt(
         name="ship",
         description="Create a shipment from a quote_token.",
         arguments=[
-            types.PromptArgument(name="quote_token", description="Rate token (from /quote)", required=True),
-            types.PromptArgument(name="content", description="Package contents, max 25 chars", required=False),
-            types.PromptArgument(name="package_type", description="Package type: 1=Envelope/Sobre, 2=Parcel/Paquete (default 2)", required=False),
+            types.PromptArgument(
+                name="quote_token", description="Rate token (from /quote)", required=True
+            ),
+            types.PromptArgument(
+                name="content", description="Package contents, max 25 chars", required=False
+            ),
+            types.PromptArgument(
+                name="package_type",
+                description="Package type: 1=Envelope/Sobre, 2=Parcel/Paquete (default 2)",
+                required=False,
+            ),
         ],
     ),
     types.Prompt(
@@ -69,7 +123,9 @@ _PROMPTS: list[types.Prompt] = [
         name="schedule_pickup_tomorrow",
         description="Schedule a pickup for tomorrow with predefined times.",
         arguments=[
-            types.PromptArgument(name="carrier", description="Carrier: DHL, FEDEX, UPS", required=True),
+            types.PromptArgument(
+                name="carrier", description="Carrier: DHL, FEDEX, UPS", required=True
+            ),
             types.PromptArgument(name="weight_kg", description="Total weight in kg", required=True),
         ],
     ),
@@ -99,7 +155,9 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         )
         return types.GetPromptResult(
             description="Choose quote flow",
-            messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
+            messages=[
+                types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))
+            ],
         )
 
     if name == "quick_quote":
@@ -136,7 +194,9 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         )
         return types.GetPromptResult(
             description="Quick quote",
-            messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
+            messages=[
+                types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))
+            ],
         )
 
     if name == "quote":
@@ -188,7 +248,9 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         )
         return types.GetPromptResult(
             description="Shipment quote",
-            messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
+            messages=[
+                types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))
+            ],
         )
 
     if name == "create_shipment_with_stored_address":
@@ -215,9 +277,9 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "If neither is given, send ''. "
             "⚠️ Also ask the user what the package contains (content, max 25 chars). Suggest examples: 'Ropa', 'Electrónicos', 'Documentos', 'Accesorios', etc. "
             "⚠️ Ask for the package type. Accepted values: 1 = Envelope/Sobre, 2 = Parcel/Paquete (default). Suggest these options to the user. "
-             "⚠️ guide_origin is not included (uses default). "
-             "Same for the recipient: if use_stored_destination is true, use the stored one; "
-             "if false, check memory and offer saved ones, or request data one by one. "
+            "⚠️ guide_origin is not included (uses default). "
+            "Same for the recipient: if use_stored_destination is true, use the stored one; "
+            "if false, check memory and offer saved ones, or request data one by one. "
             "⚠️ WARNING: this operation has a monetary cost. Confirm with the user before proceeding. "
             "AFTER the guide: check if those addresses are already in your memory. "
             "If they already exist: say 'I already have those addresses saved.' "
@@ -227,7 +289,9 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         )
         return types.GetPromptResult(
             description="Create shipment with stored addresses",
-            messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
+            messages=[
+                types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))
+            ],
         )
 
     if name == "ship":
@@ -253,8 +317,8 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "Then do the same for the recipient. "
             "⚠️ Also ask the user what the package contains (content, max 25 chars). Suggest examples: 'Ropa', 'Electrónicos', 'Documentos', 'Accesorios', etc. "
             "⚠️ Ask for the package type. Accepted values: 1 = Envelope/Sobre, 2 = Parcel/Paquete (default). Suggest these options to the user. "
-             "⚠️ guide_origin is not included (uses default). "
-             "⚠️ WARNING: this operation has a monetary cost. Confirm with the user before proceeding.\n"
+            "⚠️ guide_origin is not included (uses default). "
+            "⚠️ WARNING: this operation has a monetary cost. Confirm with the user before proceeding.\n"
             "AFTER the guide: check if those addresses are already in your memory. "
             "If they already exist: say 'I already have those addresses saved.' "
             "If not: ask 'Would you like to save them?' "
@@ -263,7 +327,9 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         )
         return types.GetPromptResult(
             description="Create shipment",
-            messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
+            messages=[
+                types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))
+            ],
         )
 
     if name == "track_status":
@@ -277,7 +343,9 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         )
         return types.GetPromptResult(
             description="Tracking status",
-            messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
+            messages=[
+                types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))
+            ],
         )
 
     if name == "schedule_pickup_tomorrow":
@@ -295,7 +363,9 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         )
         return types.GetPromptResult(
             description="Schedule pickup tomorrow",
-            messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
+            messages=[
+                types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))
+            ],
         )
 
     if name == "check_balance_before_ship":
@@ -307,7 +377,9 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         )
         return types.GetPromptResult(
             description="Check balance",
-            messages=[types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))],
+            messages=[
+                types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))
+            ],
         )
 
     raise ValueError(f"Unknown prompt: {name}")

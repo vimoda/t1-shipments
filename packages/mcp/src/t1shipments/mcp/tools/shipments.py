@@ -56,6 +56,10 @@ TOOL_TRACK_DETAIL = types.Tool(
 TOOL_QUOTE = types.Tool(
     name="quote_shipment",
     description=(
+        "This tool ONLY returns shipping rates/prices. It does NOT create a shipment. "
+        "When the user says 'cotiza' or asks for shipping prices, call this tool, "
+        "show the rates, and STOP — do NOT proceed to create_shipment unless the user "
+        "explicitly says they want to create a shipment and provides all address details. "
         "Before quoting, check your memory for saved addresses. "
         "- If ORIGIN and DESTINATION are saved: ask 'Do you want to use [origin] → [destination], "
         "change only the origin, change only the destination, or provide both new ones?' "
@@ -75,7 +79,6 @@ TOOL_QUOTE = types.Tool(
         "the rate also includes insurance_cost (= total_cost - base_cost). "
         "If insurance_applied=false, the rate includes insurance_note explaining insurance was not applied. "
         "package_value is only needed when insurance=true — otherwise omit it. "
-        "Always call this BEFORE create_shipment — quote_token is required to ship. "
         "Dimension defaults if omitted: width=30cm, height=20cm, length=15cm, "
         "package_value=500 MXN, packages=1, package_type=2 (parcel). "
         "Respond with a numbered table. Columns: #, Carrier, Service, Type, Guide cost, Insurance cost, Total, Currency, "
@@ -85,7 +88,9 @@ TOOL_QUOTE = types.Tool(
         "When insurance=false or insurance_applied=false: Guide cost = total_cost, Insurance cost = '—', Total = total_cost. "
         "Also show insurance_note clearly when insurance_applied=false. "
         "In your response, clarify which weight was used (physical vs volumetric) and its rounded integer value. "
-        "End with a prompt asking which service to proceed with, in the user's language. "
+        "When the user asks for a simple quote (quick quote): show the table and STOP. "
+        "When the user wants to create a shipment: show the table and end by asking "
+        "which service to proceed with, in the user's language. "
         "Always respond in the user's language."
     ),
     inputSchema={
