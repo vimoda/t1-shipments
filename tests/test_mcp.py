@@ -12,6 +12,7 @@ from t1shipments.mcp.tools import auth as auth_tools_module
 # Prompt tests — pure unit, no HTTP needed
 # ---------------------------------------------------------------------------
 
+
 class TestPrompts:
     def test_list_prompts_count(self):
         assert len(prompts_module._PROMPTS) == 7
@@ -28,6 +29,33 @@ class TestPrompts:
             "choose_quote_flow",
         }
 
+    def test_quick_quote_no_quote_token(self):
+        result = prompts_module._get_prompt(
+            "quick_quote",
+            {"origin_zip": "02719", "dest_zip": "40900", "weight_kg": "1", "insurance": "false"},
+        )
+        assert result.messages
+        text = result.messages[0].content.text
+        assert "02719" in text
+        assert "40900" in text
+        assert "without insurance" in text or "sin seguro" in text
+        assert "QUICK QUOTE only" in text
+        assert "Quote token" not in text
+
+    def test_quick_quote_with_insurance_value(self):
+        result = prompts_module._get_prompt(
+            "quick_quote",
+            {
+                "origin_zip": "02719",
+                "dest_zip": "40900",
+                "weight_kg": "1",
+                "insurance": "true",
+                "package_value": "500",
+            },
+        )
+        text = result.messages[0].content.text
+        assert "with insurance" in text or "con seguro" in text
+
     def test_quote_es(self):
         result = prompts_module._get_prompt(
             "quote",
@@ -41,11 +69,18 @@ class TestPrompts:
         assert "Volumetric weight" in text or "Peso volumétrico" in text
         assert "Quote token" in text
         assert "Dimensions" in text or "Dimensiones" in text
+        assert "FULL QUOTE" in text or "full quote" in text.lower()
 
     def test_quote_en(self):
         result = prompts_module._get_prompt(
             "quote",
-            {"origin_zip": "02719", "dest_zip": "40900", "weight_kg": "1", "insurance": "false", "lang": "en"},
+            {
+                "origin_zip": "02719",
+                "dest_zip": "40900",
+                "weight_kg": "1",
+                "insurance": "false",
+                "lang": "en",
+            },
         )
         text = result.messages[0].content.text
         assert "quote_shipment" in text
@@ -100,6 +135,7 @@ class TestPrompts:
         assert "18:00" in text
         # date is tomorrow, not hardcoded — just check format
         import re
+
         assert re.search(r"\d{4}-\d{2}-\d{2}", text)
 
     def test_check_balance_es(self):
@@ -123,6 +159,7 @@ class TestPrompts:
 # Resource tests — needs HTTP mock via client fixture
 # ---------------------------------------------------------------------------
 
+
 class TestResources:
     def test_static_resources_listed(self):
         uris = {str(r.uri) for r in resources_module._STATIC_RESOURCES}
@@ -140,6 +177,7 @@ class TestResources:
         contents = resources_module._read("t1shipments://balance", lambda: client)
         assert len(contents) == 1
         import json
+
         data = json.loads(contents[0].text)
         assert data["amount"] == 1250.50
 
@@ -150,6 +188,7 @@ class TestResources:
         )
         contents = resources_module._read("t1shipments://carriers", lambda: client)
         import json
+
         data = json.loads(contents[0].text)
         assert len(data["carriers"]) == 3
 
@@ -160,6 +199,7 @@ class TestResources:
         )
         contents = resources_module._read("t1shipments://shipment/GUIDE123", lambda: client)
         import json
+
         data = json.loads(contents[0].text)
         assert len(data["detail"]) == 1
 
@@ -172,6 +212,7 @@ class TestResources:
 # New shipment tools — handler unit tests
 # ---------------------------------------------------------------------------
 
+
 class TestNewShipmentTools:
     def test_track_detail_tool(self, httpx_mock, client):
         httpx_mock.add_response(
@@ -179,6 +220,7 @@ class TestNewShipmentTools:
             json=load_fixture("tracking_detail"),
         )
         from t1shipments.mcp.tools import shipments as st
+
         result = st.handle("track_detail", {"guide": "GUIDE123"}, client)
         assert "detail" in result
         assert result["detail"][0]["code"] == "CR"
@@ -189,13 +231,18 @@ class TestNewShipmentTools:
             content=b"%PDF-1.4 fake",
         )
         from t1shipments.mcp.tools import shipments as st
-        result = st.handle("download_label", {"guide_link": "https://api.example.com/label/GUIDE123"}, client)
+
+        result = st.handle(
+            "download_label", {"guide_link": "https://api.example.com/label/GUIDE123"}, client
+        )
         assert result["content_type"] == "application/pdf"
         import base64
+
         assert base64.b64decode(result["data_base64"]) == b"%PDF-1.4 fake"
 
     def test_unknown_tool_raises(self, client):
         from t1shipments.mcp.tools import shipments as st
+
         with pytest.raises(ValueError, match="Unknown tool"):
             st.handle("nonexistent", {}, client)
 
@@ -204,27 +251,42 @@ class TestNewShipmentTools:
 # Quote normalization tests
 # ---------------------------------------------------------------------------
 
+
 class TestQuoteNormalization:
     def _make_resp(self, detail):
         from t1shipments.core.models.quote import QuoteResponse
+
         return QuoteResponse(success=True, detail=detail)
 
     def _flat_rate(self, **kwargs):
         base = {
-            "token": "qt-001", "carrier": "DHL", "service_name": "DHL Express",
-            "service_type": "Economico", "cost": 100.0, "total_cost": 100.0,
-            "currency": "MXN", "delivery_days": 3, "delivery_date_carrier": "2026-05-12",
-            "weight": 1.0, "volumetric_weight": 0.2,
-            "length": 10.0, "width": 10.0, "height": 10.0,
-            "package_value": 500.0, "insurance": False, "recommended": False,
+            "token": "qt-001",
+            "carrier": "DHL",
+            "service_name": "DHL Express",
+            "service_type": "Economico",
+            "cost": 100.0,
+            "total_cost": 100.0,
+            "currency": "MXN",
+            "delivery_days": 3,
+            "delivery_date_carrier": "2026-05-12",
+            "weight": 1.0,
+            "volumetric_weight": 0.2,
+            "length": 10.0,
+            "width": 10.0,
+            "height": 10.0,
+            "package_value": 500.0,
+            "insurance": False,
+            "recommended": False,
         }
         base.update(kwargs)
         return base
 
     def test_basic_fields_exposed(self):
         from t1shipments.mcp.tools.shipments import _normalize_quote
+
         resp = self._make_resp([self._flat_rate(token="tok-x", carrier="FEDEX")])
         result = _normalize_quote(resp, insurance_requested=False)
+        assert result["has_insurance"] is False
         assert result["insurance_requested"] is False
         rate = result["rates"][0]
         assert rate["quote_token"] == "tok-x"
@@ -243,6 +305,7 @@ class TestQuoteNormalization:
 
     def test_insurance_applied_derives_insurance_cost(self):
         from t1shipments.mcp.tools.shipments import _normalize_quote
+
         resp = self._make_resp([self._flat_rate(insurance=True, cost=100.0, total_cost=120.0)])
         result = _normalize_quote(resp, insurance_requested=True)
         rate = result["rates"][0]
@@ -253,6 +316,7 @@ class TestQuoteNormalization:
 
     def test_insurance_requested_but_not_applied_adds_note(self):
         from t1shipments.mcp.tools.shipments import _normalize_quote
+
         resp = self._make_resp([self._flat_rate(insurance=False)])
         result = _normalize_quote(resp, insurance_requested=True)
         rate = result["rates"][0]
@@ -261,6 +325,7 @@ class TestQuoteNormalization:
 
     def test_no_insurance_path_omits_insurance_fields(self):
         from t1shipments.mcp.tools.shipments import _normalize_quote
+
         resp = self._make_resp([self._flat_rate(insurance=True, cost=100.0, total_cost=120.0)])
         result = _normalize_quote(resp, insurance_requested=False)
         rate = result["rates"][0]
@@ -269,27 +334,34 @@ class TestQuoteNormalization:
 
     def test_rates_sorted_by_total_cost_with_recommended_first(self):
         from t1shipments.mcp.tools.shipments import _normalize_quote
-        resp = self._make_resp([
-            self._flat_rate(token="cheap", total_cost=80.0, cost=80.0, recommended=False),
-            self._flat_rate(token="medium", total_cost=100.0, cost=100.0, recommended=True),
-            self._flat_rate(token="expensive", total_cost=150.0, cost=150.0, recommended=False),
-        ])
+
+        resp = self._make_resp(
+            [
+                self._flat_rate(token="cheap", total_cost=80.0, cost=80.0, recommended=False),
+                self._flat_rate(token="medium", total_cost=100.0, cost=100.0, recommended=True),
+                self._flat_rate(token="expensive", total_cost=150.0, cost=150.0, recommended=False),
+            ]
+        )
         result = _normalize_quote(resp, insurance_requested=False)
         tokens = [r["quote_token"] for r in result["rates"]]
         assert tokens == ["medium", "cheap", "expensive"]
 
     def test_rate_count_and_structure(self):
         from t1shipments.mcp.tools.shipments import _normalize_quote
-        resp = self._make_resp([
-            self._flat_rate(token="a", total_cost=100.0),
-            self._flat_rate(token="b", total_cost=120.0),
-        ])
+
+        resp = self._make_resp(
+            [
+                self._flat_rate(token="a", total_cost=100.0),
+                self._flat_rate(token="b", total_cost=120.0),
+            ]
+        )
         result = _normalize_quote(resp, insurance_requested=False)
         assert result["rate_count"] == 2
         assert len(result["rates"]) == 2
 
     def test_all_tools_list_length(self):
         from t1shipments.mcp.tools import shipments as st
+
         names = {t.name for t in st.ALL_TOOLS}
         assert "track_detail" in names
         assert "download_label" in names
@@ -299,6 +371,7 @@ class TestQuoteNormalization:
 # ---------------------------------------------------------------------------
 # Auth tools tests
 # ---------------------------------------------------------------------------
+
 
 class TestAuthTools:
     def test_auth_tools_listed(self):
@@ -361,6 +434,7 @@ class TestAuthTools:
 # ---------------------------------------------------------------------------
 # auto_refresh behavior tests
 # ---------------------------------------------------------------------------
+
 
 class TestAutoRefresh:
     def test_inject_token_with_refresh_enables_auto_refresh(self, client):

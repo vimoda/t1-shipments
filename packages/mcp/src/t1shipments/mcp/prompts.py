@@ -9,7 +9,7 @@ from mcp.server import Server
 _PROMPTS: list[types.Prompt] = [
     types.Prompt(
         name="quick_quote",
-        description="Quick quote: origin ZIP, destination ZIP, weight, dimensions, and optional insurance.",
+        description="Quick quote: origin ZIP, destination ZIP, dimensions, weight, and insurance (yes/no). No guide generation.",
         arguments=[
             types.PromptArgument(name="origin_zip", description="Origin ZIP code", required=True),
             types.PromptArgument(
@@ -26,11 +26,11 @@ _PROMPTS: list[types.Prompt] = [
                 name="length_cm", description="Length in cm (default 15)", required=False
             ),
             types.PromptArgument(
-                name="insurance", description="With insurance? true/false", required=False
+                name="insurance", description="With insurance? true/false", required=True
             ),
             types.PromptArgument(
                 name="package_value",
-                description="Package value in MXN (required only if insurance)",
+                description="Declared value in MXN (only if insurance=true, skip otherwise)",
                 required=False,
             ),
         ],
@@ -64,7 +64,7 @@ _PROMPTS: list[types.Prompt] = [
     ),
     types.Prompt(
         name="quote",
-        description="Quote a full shipment between two ZIP codes.",
+        description="Full quote to create a shipment/guide: ZIPs, weight, dimensions, insurance, package type.",
         arguments=[
             types.PromptArgument(name="origin_zip", description="Origin ZIP code", required=True),
             types.PromptArgument(
@@ -75,11 +75,11 @@ _PROMPTS: list[types.Prompt] = [
             types.PromptArgument(name="height_cm", description="Height in cm", required=False),
             types.PromptArgument(name="length_cm", description="Length in cm", required=False),
             types.PromptArgument(
-                name="insurance", description="With insurance? true/false", required=False
+                name="insurance", description="With insurance? true/false", required=True
             ),
             types.PromptArgument(
                 name="package_value",
-                description="Package value in MXN (required only if insurance)",
+                description="Declared value in MXN (only if insurance=true, skip otherwise)",
                 required=False,
             ),
             types.PromptArgument(
@@ -174,6 +174,7 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             f"dimensions: width={width}cm, height={height}cm, length={length}cm, "
             f"{'with' if str(insurance).lower() == 'true' else 'without'} insurance. "
             "⚠️ This is a QUICK QUOTE only — do NOT proceed to create a shipment or generate a guide. "
+            "Do NOT ask for package type or packages — those are only needed when creating a guide. "
             "If the user wants to create a shipment, tell them to use the full quote flow instead. "
             "If dimensions were not provided, use defaults: width=30cm, height=20cm, length=15cm. "
             "Calculate volumetric weight = ceil(width × height × length / 5000). "
@@ -182,7 +183,8 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "If insurance is requested, also include the package value (package_value in MXN). "
             "Call quote_shipment and display rates in a numbered table. "
             "Columns: #, Carrier, Service, Type, Guide cost, Insurance cost, Total, Currency, "
-            "Days, Estimated delivery, Weight (kg), Volumetric weight (kg), Dimensions (cm), Quote token. "
+            "Days, Estimated delivery, Weight (kg), Volumetric weight (kg), Dimensions (cm). "
+            "⚠️ Do NOT display the quote token in the table — this is a quick quote only, not for guide generation. "
             "When insurance=true and insurance_applied=true: Guide cost = base_cost, Insurance cost = insurance_cost, Total = total_cost. "
             "When insurance=false or insurance_applied=false: Guide cost = total_cost, Insurance cost = '—', Total = total_cost. "
             "In your response, clarify which weight was used — "
@@ -215,12 +217,15 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             f"{'with' if str(insurance).lower() == 'true' else 'without'} insurance, "
             f"packages={pkgs}, package_type={pkg_type} ({'Envelope/Sobre' if pkg_type == '1' else 'Parcel/Paquete'}), "
             f"shipping_days={shipping_days}. "
+            "⚠️ This is the FULL QUOTE flow — use it when the user wants to create a shipment/generate a guide. "
             "BEFORE calling quote_shipment, request any missing data from the user ONE BY ONE. "
+            "This flow requires ALL data: quick quote fields (ZIPs, weight, dimensions, insurance) "
+            "PLUS package_type and packages (needed for guide generation). "
             "Suggest examples for each: "
             "- weight: 'e.g. 1.5 kg', "
             "- dimensions: 'e.g. width=30cm, height=20cm, length=15cm' (defaults if not provided), "
             "- insurance: 'Do you want insurance? (yes/no)', "
-            "- package_value: 'Declared value in MXN (required only if insurance is requested)', "
+            "- package_value: 'Declared value in MXN (only if insurance=true, skip otherwise)', "
             "- packages: 'How many packages? (default 1)', "
             "- package_type: 'Package type: 1 = Envelope/Sobre, 2 = Parcel/Paquete (default 2)', "
             "- shipping_days: 'How many days until you ship? (e.g. 0=today, 1=tomorrow, etc.)'. "
@@ -228,7 +233,7 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "Calculate volumetric weight = ceil(width × height × length / 5000). "
             "All weights are rounded UP to the nearest integer. "
             "Use the LARGER of physical weight and volumetric weight as the quoted weight. "
-            "If insurance is requested, also include the package value (package_value in MXN). "
+            "package_value is ONLY asked and sent when insurance=true — otherwise omit it. "
             "Call quote_shipment and present results in a numbered table with columns: "
             "#, Carrier, Service, Type, Guide cost, Insurance cost, Total, Currency, "
             "Days, Estimated delivery, Weight (kg), Volumetric weight (kg), Dimensions (cm), Quote token. "
@@ -239,7 +244,7 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "In your response, clarify which weight was used — "
             "e.g. 'Quoting with volumetric weight of X kg (rounded up, physical weight Y kg).' "
             "If both are equal, say: 'Quoting with physical weight of X kg.' "
-            "End by asking: 'Which service would you like to proceed with?' "
+            "After showing the table, end by asking: 'Which service would you like to proceed with to create the guide?' "
             "Always respond in the user's language."
         )
         return types.GetPromptResult(

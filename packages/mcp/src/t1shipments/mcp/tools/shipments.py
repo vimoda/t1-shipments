@@ -57,9 +57,14 @@ TOOL_QUOTE = types.Tool(
     name="quote_shipment",
     description=(
         "This tool ONLY returns shipping rates/prices. It does NOT create a shipment. "
-        "When the user says 'cotiza' or asks for shipping prices, call this tool, "
-        "show the rates, and STOP — do NOT proceed to create_shipment unless the user "
-        "explicitly says they want to create a shipment and provides all address details. "
+        "There are two flows:\n"
+        "1) QUICK QUOTE — user just wants to know prices. Required: origin ZIP, destination ZIP, weight, "
+        "dimensions (or defaults), insurance (true/false). package_value only if insurance=true. "
+        "package_type and packages are NOT needed (defaults: 1 package, parcel). "
+        "Show rates WITHOUT the quote_token column and STOP — do not proceed to create_shipment.\n"
+        "2) FULL QUOTE — user wants to create a shipment/generate a guide. Requires all quick quote fields "
+        "PLUS package_type and packages. Show rates WITH the quote_token column so the user can "
+        "select a rate to proceed with create_shipment.\n"
         "Before quoting, check your memory for saved addresses. "
         "- If ORIGIN and DESTINATION are saved: ask 'Do you want to use [origin] → [destination], "
         "change only the origin, change only the destination, or provide both new ones?' "
@@ -75,14 +80,17 @@ TOOL_QUOTE = types.Tool(
         "Each rate exposes: quote_token, carrier, service, service_type, base_cost, total_cost, "
         "currency, estimated_days, delivery_date, weight_kg, volumetric_weight_kg, "
         "dimensions_cm {length,width,height}, package_value, packages, insurance_applied, recommended. "
+        "The response also includes insurance_requested at the root level. "
         "When insurance=true: if insurance_applied=true and base_cost differs from total_cost, "
         "the rate also includes insurance_cost (= total_cost - base_cost). "
         "If insurance_applied=false, the rate includes insurance_note explaining insurance was not applied. "
         "package_value is only needed when insurance=true — otherwise omit it. "
         "Dimension defaults if omitted: width=30cm, height=20cm, length=15cm, "
         "package_value=500 MXN, packages=1, package_type=2 (parcel). "
-        "Respond with a numbered table. Columns: #, Carrier, Service, Type, Guide cost, Insurance cost, Total, Currency, "
-        "Days, Estimated delivery, Weight (kg), Volumetric weight (kg), Dimensions (cm), Quote token. "
+        "QUICK QUOTE: show a numbered table with columns: #, Carrier, Service, Type, Guide cost, Insurance cost, Total, Currency, "
+        "Days, Estimated delivery, Weight (kg), Volumetric weight (kg), Dimensions (cm). "
+        "Do NOT show the quote_token column for quick quotes. "
+        "FULL QUOTE: show the same table WITH the Quote token column. "
         "Highlight rows with recommended=true with ★. "
         "When insurance=true and insurance_applied=true: Guide cost = base_cost, Insurance cost = insurance_cost, Total = total_cost. "
         "When insurance=false or insurance_applied=false: Guide cost = total_cost, Insurance cost = '—', Total = total_cost. "
@@ -125,8 +133,6 @@ TOOL_QUOTE = types.Tool(
             "destination_postal_code",
             "weight",
             "insurance",
-            "package_type",
-            "packages",
         ],
     },
 )
@@ -393,6 +399,7 @@ def _normalize_quote(resp: QuoteResponse, *, insurance_requested: bool) -> dict:
 
     return {
         "success": resp.success,
+        "has_insurance": insurance_requested,
         "insurance_requested": insurance_requested,
         "rate_count": len(rates),
         "rates": rates,

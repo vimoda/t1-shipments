@@ -35,17 +35,29 @@ def _read(uri: str, get_client: Callable) -> list[types.TextResourceContents]:
 
     if uri_str == "t1shipments://balance":
         data = client.balance().model_dump()
-        return [types.TextResourceContents(uri=uri, mimeType="application/json", text=json.dumps(data, default=str))]  # type: ignore[arg-type]
+        return [
+            types.TextResourceContents(
+                uri=uri, mimeType="application/json", text=json.dumps(data, default=str)
+            )
+        ]  # type: ignore[arg-type]
 
     if uri_str == "t1shipments://carriers":
         carriers = client.list_carriers()
         data = {"carriers": [c.model_dump() for c in carriers]}
-        return [types.TextResourceContents(uri=uri, mimeType="application/json", text=json.dumps(data, default=str))]  # type: ignore[arg-type]
+        return [
+            types.TextResourceContents(
+                uri=uri, mimeType="application/json", text=json.dumps(data, default=str)
+            )
+        ]  # type: ignore[arg-type]
 
     if uri_str.startswith("t1shipments://shipment/"):
         guide = uri_str.removeprefix("t1shipments://shipment/")
         data = client.track_detail(guide).model_dump()
-        return [types.TextResourceContents(uri=uri, mimeType="application/json", text=json.dumps(data, default=str))]  # type: ignore[arg-type]
+        return [
+            types.TextResourceContents(
+                uri=uri, mimeType="application/json", text=json.dumps(data, default=str)
+            )
+        ]  # type: ignore[arg-type]
 
     raise ValueError(f"Unknown resource URI: {uri}")
 

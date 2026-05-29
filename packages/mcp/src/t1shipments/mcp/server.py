@@ -60,7 +60,9 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
 
         return [types.TextContent(type="text", text=json.dumps(result, default=str))]
     except Exception as e:
-        return [types.TextContent(type="text", text=json.dumps({"success": False, "error": str(e)}))]
+        return [
+            types.TextContent(type="text", text=json.dumps({"success": False, "error": str(e)}))
+        ]
 
 
 def main() -> None:
