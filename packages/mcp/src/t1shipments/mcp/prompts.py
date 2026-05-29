@@ -151,7 +151,7 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "Then ask: Do you want a quick quote (minimal data) or start the full shipment flow "
             "(all address details will be requested)? "
             "Reply with 'quick' or 'shipment'. "
-            "Respond in the same language the user is using."
+            "Always respond in the user's language."
         )
         return types.GetPromptResult(
             description="Choose quote flow",
@@ -188,9 +188,7 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "In your response, clarify which weight was used — "
             "e.g. 'Quoting with volumetric weight of X kg (rounded up, physical weight Y kg).' "
             "If both are equal, say: 'Quoting with physical weight of X kg.' "
-            "Then check your memory to see if those addresses are already saved. "
-            "If they are not, ask the user: 'Do you want to save them?' "
-            "Respond in the same language the user is using."
+            "Always respond in the user's language."
         )
         return types.GetPromptResult(
             description="Quick quote",
@@ -241,10 +239,8 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "In your response, clarify which weight was used — "
             "e.g. 'Quoting with volumetric weight of X kg (rounded up, physical weight Y kg).' "
             "If both are equal, say: 'Quoting with physical weight of X kg.' "
-            "Then check your memory to see if those addresses are already saved. "
-            "If they are not, ask the user: 'Do you want to save them?' "
             "End by asking: 'Which service would you like to proceed with?' "
-            "Respond in the same language the user is using."
+            "Always respond in the user's language."
         )
         return types.GetPromptResult(
             description="Shipment quote",
@@ -257,8 +253,6 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         token = args.get("quote_token", "?")
         content = args.get("content", "Producto")
         pkg_type = args.get("package_type", "2")
-        use_origin = str(args.get("use_stored_origin", "false")).lower() == "true"
-        use_dest = str(args.get("use_stored_destination", "false")).lower() == "true"
         text = (
             f"Create a shipment using the quote token: {token}. "
             f"Package contents: {content}. "
@@ -285,7 +279,7 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "If they already exist: say 'I already have those addresses saved.' "
             "If not: ask 'Would you like to save them?' "
             "On success, respond with: guide number, carrier, estimated delivery date, and label link. "
-            "Respond in the same language the user is using."
+            "Always respond in the user's language."
         )
         return types.GetPromptResult(
             description="Create shipment with stored addresses",
@@ -323,7 +317,7 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "If they already exist: say 'I already have those addresses saved.' "
             "If not: ask 'Would you like to save them?' "
             "On success, respond with: guide number, carrier, estimated delivery date, and label link. "
-            "Respond in the same language the user is using."
+            "Always respond in the user's language."
         )
         return types.GetPromptResult(
             description="Create shipment",
@@ -339,7 +333,7 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "First call track_guide to get the current status and last update. "
             "If the package appears delayed (estimated date expired or stuck status), "
             "also call track_detail to get the full history and summarize what happened. "
-            "Respond in the same language the user is using."
+            "Always respond in the user's language."
         )
         return types.GetPromptResult(
             description="Tracking status",
@@ -355,11 +349,13 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         text = (
             f"Schedule a pickup with {carrier} for tomorrow ({tomorrow}), {weight} kg total. "
             "Use open_time=09:00 and close_time=18:00. "
+            "The origin address must be registered in T1Envios beforehand. "
+            "If the address is not registered, tell the user it needs to be set up first. "
             "Request data ONE BY ONE: first the contact name, wait for the response, "
             "then last name, phone, email, street, number, neighborhood, municipality, state, ZIP, "
             "references, pieces, and dimensions. Do not ask multiple fields in the same message. "
             "Then call schedule_pickup. Warn the user that this operation has a monetary cost. "
-            "Respond in the same language the user is using."
+            "Always respond in the user's language."
         )
         return types.GetPromptResult(
             description="Schedule pickup tomorrow",
@@ -373,7 +369,7 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
             "Check my T1Envios balance with get_balance. "
             "If the balance is less than 200 MXN, let me know I might not have sufficient funds to create a shipment and suggest topping up. "
             "Otherwise, confirm the available balance and let me know I can proceed. "
-            "Respond in the same language the user is using."
+            "Always respond in the user's language."
         )
         return types.GetPromptResult(
             description="Check balance",
