@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import httpx
-import mcp.types as types
 from pydantic import ValidationError
+
+import mcp.types as types
 
 from ...core.exceptions import ApiError
 from ...core.models.quote import QuoteRequest, QuoteResponse
@@ -12,10 +13,10 @@ from ...core.models.tracking import PickupRequest
 TOOL_GET_BALANCE = types.Tool(
     name="get_balance",
     description=(
-        "Get the current account balance in MXN / Obtiene el saldo actual en MXN. "
+        "Get the current account balance in MXN. "
         "Call before creating shipments to verify sufficient funds. "
-        "Respond with exactly: 'Tu saldo disponible es $X,XXX.XX MXN.' "
-        "If balance < 200 MXN add: 'Es posible que no tengas fondos suficientes para crear un envío.'"
+        "Respond with the balance amount and a warning if insufficient. "
+        "Always respond in the user's language."
     ),
     inputSchema={"type": "object", "properties": {}},
 )
@@ -23,14 +24,15 @@ TOOL_GET_BALANCE = types.Tool(
 TOOL_TRACK_GUIDE = types.Tool(
     name="track_guide",
     description=(
-        "Track a shipment by guide number / Rastrea un envío por número de guía. "
+        "Track a shipment by guide number. "
         "Returns current status, estimated delivery date, and event history. "
         "Respond with: status, estimated delivery date, and last event. "
-        "One short paragraph max. If delayed, say so explicitly."
+        "One short paragraph max. If delayed, say so explicitly. "
+        "Always respond in the user's language."
     ),
     inputSchema={
         "type": "object",
-        "properties": {"guide": {"type": "string", "description": "Guide/tracking number / Número de guía"}},
+        "properties": {"guide": {"type": "string", "description": "Guide/tracking number"}},
         "required": ["guide"],
     },
 )
@@ -38,14 +40,15 @@ TOOL_TRACK_GUIDE = types.Tool(
 TOOL_TRACK_DETAIL = types.Tool(
     name="track_detail",
     description=(
-        "Get full tracking detail for a shipment / Obtiene el detalle completo de rastreo. "
+        "Get full tracking detail for a shipment. "
         "Returns all tracking events with timestamps, locations, and carrier info. "
         "Use when track_guide shows a delayed or stuck status. "
-        "Respond with a bullet list of events (date, location, status). Most recent first. No extra commentary."
+        "Respond with a bullet list of events (date, location, status). Most recent first. No extra commentary. "
+        "Always respond in the user's language."
     ),
     inputSchema={
         "type": "object",
-        "properties": {"guide": {"type": "string", "description": "Guide/tracking number / Número de guía"}},
+        "properties": {"guide": {"type": "string", "description": "Guide/tracking number"}},
         "required": ["guide"],
     },
 )
@@ -53,13 +56,13 @@ TOOL_TRACK_DETAIL = types.Tool(
 TOOL_QUOTE = types.Tool(
     name="quote_shipment",
     description=(
-        "ANTES de cotizar, revisá tu memoria por direcciones guardadas. "
-        "- Si existen ORIGEN y DESTINO guardados: preguntá '¿Querés usar [origen] → [destino], "
-        "cambiar solo el origen, cambiar solo el destino, o dar ambos nuevos?' "
-        "- Si solo existe ORIGEN: 'Tengo guardado [origen]. ¿Lo usamos o ponemos otro? Y decime el destino.' "
-        "- Si solo existe DESTINO: 'Tengo guardado [destino]. ¿Lo usamos o ponemos otro? Y decime el origen.' "
-        "- Si no hay nada: seguí normal pidiendo CPs. "
-        "Get available shipping rates / Cotiza tarifas de envío. "
+        "Before quoting, check your memory for saved addresses. "
+        "- If ORIGIN and DESTINATION are saved: ask 'Do you want to use [origin] → [destination], "
+        "change only the origin, change only the destination, or provide both new ones?' "
+        "- If only ORIGIN is saved: 'I have [origin] saved. Shall we use it or enter a different one? And tell me the destination.' "
+        "- If only DESTINATION is saved: 'I have [destination] saved. Shall we use it or enter a different one? And tell me the origin.' "
+        "- If none saved: proceed normally asking for ZIP codes. "
+        "Get available shipping rates. "
         "Requires weight, dimensions (width/height/length), and origin/destination ZIP codes. "
         "Calculate the volumetric weight = ceil(width × height × length / 5000). "
         "All weights are rounded UP to the nearest integer. "
@@ -82,26 +85,43 @@ TOOL_QUOTE = types.Tool(
         "When insurance=false or insurance_applied=false: Guide cost = total_cost, Insurance cost = '—', Total = total_cost. "
         "Also show insurance_note clearly when insurance_applied=false. "
         "In your response, clarify which weight was used (physical vs volumetric) and its rounded integer value. "
-        "End with: '¿Con qué servicio deseas proceder?' "
-        "Respondé en el mismo idioma que el usuario está usando."
+        "End with a prompt asking which service to proceed with, in the user's language. "
+        "Always respond in the user's language."
     ),
     inputSchema={
         "type": "object",
         "properties": {
-            "origin_postal_code": {"type": "string", "description": "5-digit Mexican origin ZIP code / CP origen (5 dígitos)"},
-            "destination_postal_code": {"type": "string", "description": "5-digit Mexican destination ZIP code / CP destino (5 dígitos)"},
-            "weight": {"type": "number", "description": "Weight in kg. Use the LARGER of physical weight and volumetric weight (ceil(W×H×L/5000)), rounded UP to integer. / Peso en kg. Usá el MAYOR entre peso físico y volumétrico (ceil(W×AL×L/5000)), redondeado hacia arriba."},
-            "width": {"type": "number", "description": "Width in cm (default 30) / Ancho en cm (default 30)"},
-            "height": {"type": "number", "description": "Height in cm (default 20) / Alto en cm (default 20)"},
-            "length": {"type": "number", "description": "Length in cm (default 15) / Largo en cm (default 15)"},
-            "shipping_days": {"type": "integer", "description": "Days until shipment / Días hasta envío"},
-            "package_value": {"type": "number", "description": "Declared value in MXN (only required when insurance=true) / Valor declarado en MXN (solo requerido si insurance=true)"},
-            "insurance": {"type": "boolean", "description": "Include insurance / Incluir seguro"},
-            "packages": {"type": "integer", "description": "Number of packages (default 1) / Número de paquetes (default 1)"},
-            "package_type": {"type": "integer", "description": "1=Envelope/Sobre, 2=Parcel/Paquete (default 2)"},
+            "origin_postal_code": {
+                "type": "string",
+                "description": "5-digit Mexican origin ZIP code",
+            },
+            "destination_postal_code": {
+                "type": "string",
+                "description": "5-digit Mexican destination ZIP code",
+            },
+            "weight": {
+                "type": "number",
+                "description": "Weight in kg. Use the LARGER of physical weight and volumetric weight (ceil(W×H×L/5000)), rounded UP to integer.",
+            },
+            "width": {"type": "number", "description": "Width in cm (default 30)"},
+            "height": {"type": "number", "description": "Height in cm (default 20)"},
+            "length": {"type": "number", "description": "Length in cm (default 15)"},
+            "shipping_days": {"type": "integer", "description": "Days until shipment"},
+            "package_value": {
+                "type": "number",
+                "description": "Declared value in MXN (only required when insurance=true)",
+            },
+            "insurance": {"type": "boolean", "description": "Include insurance"},
+            "packages": {"type": "integer", "description": "Number of packages (default 1)"},
+            "package_type": {"type": "integer", "description": "1=Envelope, 2=Parcel (default 2)"},
         },
         "required": [
-            "origin_postal_code", "destination_postal_code", "weight", "insurance", "package_type", "packages",
+            "origin_postal_code",
+            "destination_postal_code",
+            "weight",
+            "insurance",
+            "package_type",
+            "packages",
         ],
     },
 )
@@ -109,62 +129,87 @@ TOOL_QUOTE = types.Tool(
 TOOL_CREATE_SHIPMENT = types.Tool(
     name="create_shipment",
     description=(
-        "⚠️ This operation has a monetary cost / Esta operación tiene costo monetario. "
-        "Create a shipment and generate a shipping guide / Crea un envío y genera la guía. "
+        "⚠️ This operation has a monetary cost. "
+        "Create a shipment and generate a shipping guide. "
         "Requires a quote_token from quote_shipment. "
         "Flow: quote_shipment → select rate → create_shipment. "
-        "ANTES de llamar este tool, revisá tu memoria por direcciones guardadas. "
-        "- Si existen ORIGEN y DESTINO guardados: preguntá '¿Querés usar [origen] → [destino], "
-        "cambiar solo el origen, cambiar solo el destino, o dar ambos nuevos?' "
-        "- Si solo existe ORIGEN: 'Tengo guardado [origen]. ¿Lo usamos o ponemos otro? Y decime el destino.' "
-        "- Si solo existe DESTINO: 'Tengo guardado [destino]. ¿Lo usamos o ponemos otro? Y decime el origen.' "
-        "- Si no hay nada: seguí normal pidiendo datos. "
-        "DESPUÉS de crear la guía exitosamente, revisá tu memoria para ver si esas direcciones ya están guardadas. "
-        "- Si ya existen: decí 'Las direcciones ya las tengo guardadas.' "
-        "- Si no existen: preguntale al usuario '¿Querés guardar las direcciones para usarlas después?' "
+        "Before calling this tool, check your memory for saved addresses. "
+        "- If ORIGIN and DESTINATION are saved: ask 'Do you want to use [origin] → [destination], "
+        "change only the origin, change only the destination, or provide both new ones?' "
+        "- If only ORIGIN is saved: 'I have [origin] saved. Shall we use it or enter a different one? And tell me the destination.' "
+        "- If only DESTINATION is saved: 'I have [destination] saved. Shall we use it or enter a different one? And tell me the origin.' "
+        "- If none saved: proceed normally asking for details. "
+        "AFTER creating the guide successfully, check your memory to see if those addresses are already saved. "
+        "- If they exist: say 'The addresses are already saved.' "
+        "- If they don't exist: ask the user 'Would you like to save the addresses for later use?' "
         "If the origin ZIP has multiple neighborhoods, ask the user which one applies before calling. "
         "On success respond with: guide number, carrier, estimated delivery date, and label download link. "
-        "One sentence each. No JSON, no raw data."
+        "One sentence each. No JSON, no raw data. "
+        "Always respond in the user's language."
     ),
     inputSchema={
         "type": "object",
         "properties": {
-            "quote_token": {"type": "string", "description": "Rate token from quote_shipment / Token de tarifa"},
-            "content": {"type": "string", "description": "Package contents (max 25 chars) / Contenido del paquete (máx 25 chars)"},
-            "origin_first_name": {"type": "string", "description": "Sender first name / Nombre del remitente"},
-            "origin_last_name": {"type": "string", "description": "Sender last name / Apellido del remitente"},
-            "origin_email": {"type": "string", "description": "Sender email / Correo del remitente"},
-            "origin_street": {"type": "string", "description": "Sender street / Calle del remitente"},
-            "origin_number": {"type": "string", "description": "Sender exterior number / Número exterior"},
-            "origin_neighborhood": {"type": "string", "description": "Sender neighborhood/colonia. If ZIP has multiple colonias, confirm with user first"},
-            "origin_phone": {"type": "string", "description": "Sender phone / Teléfono del remitente"},
-            "origin_state": {"type": "string", "description": "Sender state / Estado del remitente"},
-            "origin_municipality": {"type": "string", "description": "Sender municipality / Municipio del remitente"},
-            "origin_references": {"type": "string", "description": "Address references — include interior/apartment/tower details first, then general references. Max 35 chars. / Referencias — incluí interior/depto/torre primero, luego refs generales. Máx 35 caracteres."},
-            "origin_postal_code": {"type": "string", "description": "Sender 5-digit ZIP / CP del remitente"},
-            "destination_first_name": {"type": "string", "description": "Recipient first name / Nombre del destinatario"},
-            "destination_last_name": {"type": "string", "description": "Recipient last name / Apellido del destinatario"},
-            "destination_email": {"type": "string", "description": "Recipient email / Correo del destinatario"},
-            "destination_street": {"type": "string", "description": "Recipient street / Calle del destinatario"},
-            "destination_number": {"type": "string", "description": "Recipient exterior number / Número exterior"},
-            "destination_neighborhood": {"type": "string", "description": "Recipient neighborhood/colonia"},
-            "destination_phone": {"type": "string", "description": "Recipient phone / Teléfono del destinatario"},
-            "destination_state": {"type": "string", "description": "Recipient state / Estado del destinatario"},
-            "destination_municipality": {"type": "string", "description": "Recipient municipality / Municipio del destinatario"},
-            "destination_references": {"type": "string", "description": "Address references — include interior/apartment/tower details first, then general references. Max 35 chars. / Referencias — incluí interior/depto/torre primero, luego refs generales. Máx 35 caracteres."},
-            "destination_postal_code": {"type": "string", "description": "Recipient 5-digit ZIP / CP del destinatario"},
-            "packages": {"type": "integer", "description": "Number of packages / Número de paquetes"},
+            "quote_token": {"type": "string", "description": "Rate token from quote_shipment"},
+            "content": {"type": "string", "description": "Package contents (max 25 chars)"},
+            "origin_first_name": {"type": "string", "description": "Sender first name"},
+            "origin_last_name": {"type": "string", "description": "Sender last name"},
+            "origin_email": {"type": "string", "description": "Sender email"},
+            "origin_street": {"type": "string", "description": "Sender street"},
+            "origin_number": {"type": "string", "description": "Sender exterior number"},
+            "origin_neighborhood": {
+                "type": "string",
+                "description": "Sender neighborhood/colonia. If ZIP has multiple colonias, confirm with user first",
+            },
+            "origin_phone": {"type": "string", "description": "Sender phone"},
+            "origin_state": {"type": "string", "description": "Sender state"},
+            "origin_municipality": {"type": "string", "description": "Sender municipality"},
+            "origin_references": {
+                "type": "string",
+                "description": "Address references — include interior/apartment/tower details first, then general references. Max 35 chars.",
+            },
+            "origin_postal_code": {"type": "string", "description": "Sender 5-digit ZIP"},
+            "destination_first_name": {"type": "string", "description": "Recipient first name"},
+            "destination_last_name": {"type": "string", "description": "Recipient last name"},
+            "destination_email": {"type": "string", "description": "Recipient email"},
+            "destination_street": {"type": "string", "description": "Recipient street"},
+            "destination_number": {"type": "string", "description": "Recipient exterior number"},
+            "destination_neighborhood": {
+                "type": "string",
+                "description": "Recipient neighborhood/colonia",
+            },
+            "destination_phone": {"type": "string", "description": "Recipient phone"},
+            "destination_state": {"type": "string", "description": "Recipient state"},
+            "destination_municipality": {"type": "string", "description": "Recipient municipality"},
+            "destination_references": {
+                "type": "string",
+                "description": "Address references — include interior/apartment/tower details first, then general references. Max 35 chars.",
+            },
+            "destination_postal_code": {"type": "string", "description": "Recipient 5-digit ZIP"},
+            "packages": {"type": "integer", "description": "Number of packages"},
         },
         "required": [
             "quote_token",
             "content",
-            "origin_first_name", "origin_last_name", "origin_email",
-            "origin_street", "origin_number", "origin_neighborhood",
-            "origin_phone", "origin_state", "origin_municipality",
+            "origin_first_name",
+            "origin_last_name",
+            "origin_email",
+            "origin_street",
+            "origin_number",
+            "origin_neighborhood",
+            "origin_phone",
+            "origin_state",
+            "origin_municipality",
             "origin_postal_code",
-            "destination_first_name", "destination_last_name", "destination_email",
-            "destination_street", "destination_number", "destination_neighborhood",
-            "destination_phone", "destination_state", "destination_municipality",
+            "destination_first_name",
+            "destination_last_name",
+            "destination_email",
+            "destination_street",
+            "destination_number",
+            "destination_neighborhood",
+            "destination_phone",
+            "destination_state",
+            "destination_municipality",
             "destination_postal_code",
             "packages",
         ],
@@ -174,14 +219,18 @@ TOOL_CREATE_SHIPMENT = types.Tool(
 TOOL_DOWNLOAD_LABEL = types.Tool(
     name="download_label",
     description=(
-        "Download the shipping label PDF for a guide / Descarga la etiqueta PDF de una guía. "
+        "Download the shipping label PDF for a guide. "
         "Use the guide_link returned by create_shipment. Returns base64-encoded PDF content. "
-        "Respond with: 'Etiqueta lista. Puedes descargarla aquí: [link]' Do not show the base64 data."
+        "Respond with a message saying the label is ready with the download link. Do not show the base64 data. "
+        "Always respond in the user's language."
     ),
     inputSchema={
         "type": "object",
         "properties": {
-            "guide_link": {"type": "string", "description": "Label URL from create_shipment response / URL de etiqueta del envío creado"},
+            "guide_link": {
+                "type": "string",
+                "description": "Label URL from create_shipment response",
+            },
         },
         "required": ["guide_link"],
     },
@@ -190,10 +239,11 @@ TOOL_DOWNLOAD_LABEL = types.Tool(
 TOOL_SCHEDULE_PICKUP = types.Tool(
     name="schedule_pickup",
     description=(
-        "⚠️ This operation has a monetary cost / Esta operación tiene costo monetario. "
-        "Schedule a package pickup at the origin address / Programa recolección en la dirección de origen. "
+        "⚠️ This operation has a monetary cost. "
+        "Schedule a package pickup at the origin address. "
         "The origin address must be registered in T1Envios beforehand. "
-        "On success respond with: 'Recolección programada para [fecha] entre [open_time] y [close_time] con [carrier].' One line only."
+        "On success respond with a message confirming the pickup date, time window, and carrier. One line only. "
+        "Always respond in the user's language."
     ),
     inputSchema={
         "type": "object",
@@ -220,10 +270,26 @@ TOOL_SCHEDULE_PICKUP = types.Tool(
             "close_time": {"type": "string", "description": "Close time HH:MM"},
         },
         "required": [
-            "carrier", "contact_first_name", "contact_last_name", "email",
-            "street", "number", "neighborhood", "phone", "state", "municipality",
-            "postal_code", "references", "pieces", "weight", "length", "width",
-            "height", "date", "open_time", "close_time",
+            "carrier",
+            "contact_first_name",
+            "contact_last_name",
+            "email",
+            "street",
+            "number",
+            "neighborhood",
+            "phone",
+            "state",
+            "municipality",
+            "postal_code",
+            "references",
+            "pieces",
+            "weight",
+            "length",
+            "width",
+            "height",
+            "date",
+            "open_time",
+            "close_time",
         ],
     },
 )
@@ -258,7 +324,11 @@ def handle(name: str, arguments: dict, client) -> dict:
         if name == "download_label":
             pdf_bytes = client.download_label(arguments["guide_link"])
             import base64
-            return {"content_type": "application/pdf", "data_base64": base64.b64encode(pdf_bytes).decode()}
+
+            return {
+                "content_type": "application/pdf",
+                "data_base64": base64.b64encode(pdf_bytes).decode(),
+            }
         if name == "schedule_pickup":
             req = PickupRequest(**arguments)
             return client.schedule_pickup(req).model_dump()
@@ -273,7 +343,7 @@ def handle(name: str, arguments: dict, client) -> dict:
 
 def _normalize_quote(resp: QuoteResponse, *, insurance_requested: bool) -> dict:
     rates = []
-    for raw in (resp.detail or []):
+    for raw in resp.detail or []:
         if not isinstance(raw, dict):
             rates.append(raw)
             continue
