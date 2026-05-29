@@ -375,6 +375,8 @@ uv run t1shipments-mcp
 
 Once `t1-shipments-mcp` is installed, configure your MCP client with the JSON block that matches your installation method.
 
+> ⚠️ **Environment variables:** Your MCP client must pass `T1_CLIENT_ID` and `T1_CLIENT_SECRET` in the `env` block. Do NOT use `${VAR}` syntax unless you are sure your client supports interpolation — instead, put the actual values directly (e.g. `"T1_CLIENT_ID": "tu-client-id-real"`). If the server fails to start silently, this is likely the cause.
+
 #### Via `uvx` (no installation — runs from GitHub on demand)
 
 ```json
