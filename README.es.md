@@ -346,6 +346,8 @@ t1 mcp run       # Inicia el servidor MCP
 
 El servidor MCP permite que agentes de IA (Claude Desktop, opencode, Cursor, etc.) interactúen con T1Envios a través del [Model Context Protocol](https://modelcontextprotocol.io).
 
+> **Inicio rápido desde el repo clonado:** `git clone`, `uv sync`, luego agrega el bloque JSON de la sección [Via `uv` — desde un repositorio clonado](#via-uv--desde-un-repositorio-clonado).
+
 ### Instalación
 
 ```bash
@@ -413,14 +415,7 @@ Apuntar a un tag / commit / rama específico:
   "mcpServers": {
     "t1shipments": {
       "command": "uv",
-      "args": [
-        "--directory",
-        "/ruta/a/t1-shipments",
-        "run",
-        "python",
-        "-m",
-        "t1shipments.mcp.server"
-      ],
+      "args": ["run", "--directory", "/ruta/a/t1-shipments", "t1shipments-mcp"],
       "env": {
         "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
         "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
