@@ -6,11 +6,13 @@ Python SDK, CLI, and MCP Server for the [T1Envios](https://t1envios.com) API. Qu
 
 [Leer en español](README.es.md)
 
-| Tool | Package | Description |
-|------|---------|-------------|
-| SDK (`T1Client`) | `t1-shipments-core` | Programmatic Python SDK |
-| CLI (`t1`) | `t1-shipments-cli` | Terminal interface |
-| MCP server | `t1-shipments-mcp` | MCP server for AI agents |
+## Packages
+
+| Tool | Package | Description | Docs |
+|------|---------|-------------|------|
+| SDK (`T1Client`) | `t1-shipments-core` | Programmatic Python SDK | [README](packages/core/README.md) |
+| CLI (`t1`) | `t1-shipments-cli` | Terminal interface | [README](packages/cli/README.md) |
+| MCP server | `t1-shipments-mcp` | MCP server for AI agents | [README](packages/mcp/README.md) |
 
 ---
 

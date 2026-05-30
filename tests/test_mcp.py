@@ -15,7 +15,7 @@ from t1shipments.mcp.tools import auth as auth_tools_module
 
 class TestPrompts:
     def test_list_prompts_count(self):
-        assert len(prompts_module._PROMPTS) == 7
+        assert len(prompts_module._PROMPTS) == 8
 
     def test_list_prompts_names(self):
         names = {p.name for p in prompts_module._PROMPTS}
@@ -27,6 +27,7 @@ class TestPrompts:
             "track_status",
             "schedule_pickup_tomorrow",
             "choose_quote_flow",
+            "developer_instructions",
         }
 
     def test_quick_quote_no_quote_token(self):
@@ -150,6 +151,42 @@ class TestPrompts:
         assert "200 MXN" in text
         assert "get_balance" in text
 
+    def test_developer_instructions_full(self):
+        result = prompts_module._get_prompt("developer_instructions", {})
+        text = result.messages[0].content.text
+        assert "t1shipments://developer-instructions" in text
+        assert "Python SDK" in text or "SDK" in text
+        assert "REST API" in text
+        assert "user's language" in text
+
+    def test_developer_instructions_sdk_topic(self):
+        result = prompts_module._get_prompt("developer_instructions", {"topic": "sdk"})
+        text = result.messages[0].content.text
+        assert "T1Client" in text
+        assert "T1_CLIENT_ID" in text
+        assert "user's language" in text
+
+    def test_developer_instructions_api_topic(self):
+        result = prompts_module._get_prompt("developer_instructions", {"topic": "api"})
+        text = result.messages[0].content.text
+        assert "Keycloak" in text or "OIDC" in text
+        assert "Authorization" in text
+        assert "user's language" in text
+
+    def test_developer_instructions_auth_topic(self):
+        result = prompts_module._get_prompt("developer_instructions", {"topic": "auth"})
+        text = result.messages[0].content.text
+        assert "auto-refresh" in text
+        assert "401" in text
+        assert "user's language" in text
+
+    def test_developer_instructions_models_topic(self):
+        result = prompts_module._get_prompt("developer_instructions", {"topic": "models"})
+        text = result.messages[0].content.text
+        assert "QuoteRequest" in text
+        assert "ShipmentRequest" in text
+        assert "user's language" in text
+
     def test_unknown_prompt_raises(self):
         with pytest.raises(ValueError, match="Unknown prompt"):
             prompts_module._get_prompt("nonexistent", {})
@@ -165,6 +202,7 @@ class TestResources:
         uris = {str(r.uri) for r in resources_module._STATIC_RESOURCES}
         assert "t1shipments://balance" in uris
         assert "t1shipments://carriers" in uris
+        assert "t1shipments://developer-instructions" in uris
 
     def test_shipment_template_uri(self):
         assert "{guide}" in resources_module._SHIPMENT_TEMPLATE.uriTemplate
@@ -202,6 +240,21 @@ class TestResources:
 
         data = json.loads(contents[0].text)
         assert len(data["detail"]) == 1
+
+    def test_read_developer_instructions(self, client):
+        contents = resources_module._read(
+            "t1shipments://developer-instructions", lambda: client
+        )
+        assert len(contents) == 1
+        text = contents[0].text
+        assert "T1Envios" in text
+        assert "T1Client.from_settings" in text
+        assert "T1_CLIENT_ID" in text
+        assert "/quote/create-with-quote" in text
+        assert "Authorization: Bearer" in text
+        assert "QuoteRequest" in text
+        assert "ShipmentRequest" in text
+        assert "user's language" in text
 
     def test_unknown_resource_raises(self, client):
         with pytest.raises(ValueError, match="Unknown resource URI"):

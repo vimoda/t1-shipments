@@ -134,6 +134,17 @@ _PROMPTS: list[types.Prompt] = [
         description="Ask the user if they want a quick quote or the full shipment flow.",
         arguments=[],
     ),
+    types.Prompt(
+        name="developer_instructions",
+        description="Full developer documentation for T1Envios — SDK usage, direct API, authentication, endpoints, and best practices.",
+        arguments=[
+            types.PromptArgument(
+                name="topic",
+                description="Optional subtopic: 'sdk', 'api', 'auth', 'models', or omit for full docs",
+                required=False,
+            ),
+        ],
+    ),
 ]
 
 
@@ -385,6 +396,68 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
         )
         return types.GetPromptResult(
             description="Check balance",
+            messages=[
+                types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))
+            ],
+        )
+
+    if name == "developer_instructions":
+        topic = (args.get("topic") or "").strip().lower()
+
+        if topic == "sdk":
+            text = (
+                "The user is asking about the T1Envios Python SDK. Read the full "
+                "`t1shipments://developer-instructions` resource and focus on the "
+                "'Python SDK' section. Explain T1Client, how to configure it via "
+                "environment variables (T1_CLIENT_ID, T1_CLIENT_SECRET, etc.), "
+                "and show a usage example with QuoteRequest and ShipmentRequest. "
+                "Emphasize that quote() is free and create_shipment() has monetary cost. "
+                "Always respond in the user's language."
+            )
+        elif topic == "api":
+            text = (
+                "The user is asking about using the T1Envios REST API directly. Read the full "
+                "`t1shipments://developer-instructions` resource and focus on the "
+                "'Direct API Usage' section. Explain the base URLs for dev and prod, "
+                "the Keycloak OIDC auth flow, required headers (Authorization: Bearer), "
+                "and all available endpoints with their HTTP methods. "
+                "Always respond in the user's language."
+            )
+        elif topic == "auth":
+            text = (
+                "The user is asking about T1Envios authentication. Read the full "
+                "`t1shipments://developer-instructions` resource and focus on the "
+                "authentication sections. Explain the Keycloak OIDC token endpoint, "
+                "the form-urlencoded payload for login and refresh, and how to use the "
+                "access token in API requests. Also explain the SDK's auto-refresh behavior "
+                "(60-second buffer, automatic retry on 401). "
+                "Always respond in the user's language."
+            )
+        elif topic == "models":
+            text = (
+                "The user is asking about T1Envios data models. Read the full "
+                "`t1shipments://developer-instructions` resource and explain QuoteRequest, "
+                "ShipmentRequest, and PickupRequest — their required and optional fields, "
+                "validation rules (volumetric weight, content max 25 chars, guide_origin "
+                "defaults to 't1envios'), and how to use them in SDK calls. "
+                "Also explain QuoteResponse and Shipment response fields. "
+                "Always respond in the user's language."
+            )
+        else:
+            text = (
+                "The user is asking for T1Envios / T1Shippings developer documentation. "
+                "Read the `t1shipments://developer-instructions` resource in full and "
+                "provide a comprehensive summary covering: "
+                "1) What T1Envios is — a Mexican shipping integration platform. "
+                "2) Python SDK usage — T1Client, env var config, quote → create_shipment flow. "
+                "3) Direct REST API — base URLs, Keycloak auth, endpoints, headers. "
+                "4) Important notes — volumetric weight, retry behavior, monetary costs, "
+                "address registration for pickups. "
+                "Always respond in the user's language."
+            )
+
+        return types.GetPromptResult(
+            description="Developer instructions",
             messages=[
                 types.PromptMessage(role="user", content=types.TextContent(type="text", text=text))
             ],

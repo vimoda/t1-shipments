@@ -101,6 +101,11 @@ TOOL_QUOTE = types.Tool(
         "When the user asks for a simple quote (quick quote): show the table and STOP. "
         "When the user wants to create a shipment: show the table and end by asking "
         "which service to proceed with, in the user's language. "
+        "The response includes a 'recommendations' field with 'cheapest', 'fastest', and 'best_value' "
+        "(best cost-to-delivery-time ratio). Use this data to suggest the best option to the user "
+        "based on their priorities. For example: 'La opción más barata es [carrier] [service] "
+        "con $[total_cost] y [estimated_days] días hábiles.' Always highlight the recommendation "
+        "that best matches the user's stated or implied needs. "
         "Always respond in the user's language."
     ),
     inputSchema={
@@ -401,10 +406,45 @@ def _normalize_quote(resp: QuoteResponse, *, insurance_requested: bool) -> dict:
     # recommended rows first, then ascending total_cost
     rates.sort(key=lambda r: (not r.get("recommended", False), r.get("total_cost") or 0.0))
 
+    recommendations = {}
+    if rates:
+        _cheapest = min(rates, key=lambda r: r.get("total_cost") or float("inf"))
+        recommendations["cheapest"] = {
+            "quote_token": _cheapest.get("quote_token"),
+            "carrier": _cheapest.get("carrier"),
+            "service": _cheapest.get("service"),
+            "total_cost": _cheapest.get("total_cost"),
+            "estimated_days": _cheapest.get("estimated_days"),
+        }
+
+        rates_with_days = [r for r in rates if r.get("estimated_days") is not None]
+        if rates_with_days:
+            _fastest = min(rates_with_days, key=lambda r: r["estimated_days"])
+            recommendations["fastest"] = {
+                "quote_token": _fastest.get("quote_token"),
+                "carrier": _fastest.get("carrier"),
+                "service": _fastest.get("service"),
+                "total_cost": _fastest.get("total_cost"),
+                "estimated_days": _fastest.get("estimated_days"),
+            }
+
+            _best_value = min(
+                rates_with_days,
+                key=lambda r: (r.get("total_cost") or float("inf")) / r["estimated_days"],
+            )
+            recommendations["best_value"] = {
+                "quote_token": _best_value.get("quote_token"),
+                "carrier": _best_value.get("carrier"),
+                "service": _best_value.get("service"),
+                "total_cost": _best_value.get("total_cost"),
+                "estimated_days": _best_value.get("estimated_days"),
+            }
+
     return {
         "success": resp.success,
         "has_insurance": insurance_requested,
         "insurance_requested": insurance_requested,
         "rate_count": len(rates),
         "rates": rates,
+        "recommendations": recommendations,
     }
