@@ -203,9 +203,15 @@ class TestResources:
         assert "t1shipments://balance" in uris
         assert "t1shipments://carriers" in uris
         assert "t1shipments://developer-instructions" in uris
+        assert "docs://t1/core" in uris
+        assert "docs://t1/cli" in uris
+        assert "docs://t1/mcp" in uris
 
     def test_shipment_template_uri(self):
         assert "{guide}" in resources_module._SHIPMENT_TEMPLATE.uriTemplate
+
+    def test_docs_template_uri(self):
+        assert resources_module._DOCS_TEMPLATE.uriTemplate == "docs://t1/{package}"
 
     def test_read_balance(self, httpx_mock, client):
         httpx_mock.add_response(
@@ -255,6 +261,24 @@ class TestResources:
         assert "QuoteRequest" in text
         assert "ShipmentRequest" in text
         assert "user's language" in text
+
+    @pytest.mark.parametrize(
+        ("package", "heading"),
+        [
+            ("core", "# t1-shipments-core"),
+            ("cli", "# t1-shipments-cli"),
+            ("mcp", "# t1-shipments-mcp"),
+        ],
+    )
+    def test_read_package_docs(self, package, heading):
+        contents = resources_module._read(f"docs://t1/{package}", lambda: None)
+        assert len(contents) == 1
+        assert contents[0].mimeType == "text/markdown"
+        assert heading in contents[0].text
+
+    def test_missing_package_docs_raises(self):
+        with pytest.raises(FileNotFoundError, match="Docs para 'unknown' no encontradas"):
+            resources_module._read("docs://t1/unknown", lambda: None)
 
     def test_unknown_resource_raises(self, client):
         with pytest.raises(ValueError, match="Unknown resource URI"):

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from pathlib import Path
 
 import mcp.types as types
 from mcp.server import Server
@@ -204,7 +205,37 @@ _STATIC_RESOURCES: list[types.Resource] = [
     types.Resource(
         uri="t1shipments://developer-instructions",  # type: ignore[arg-type]
         name="Developer Instructions / Instrucciones para desarrolladores",
-        description="How to use the T1Envios SDK and REST API — authentication, endpoints, request/response examples, and best practices",
+        description=(
+            "How to use the T1Envios SDK and REST API: authentication, endpoints, "
+            "request/response examples, and best practices"
+        ),
+        mimeType="text/markdown",
+    ),
+    types.Resource(
+        uri="docs://t1/core",  # type: ignore[arg-type]
+        name="Core Package Docs / Documentacion del paquete core",
+        description=(
+            "Read when working with the Python SDK, T1Client, auth, API resources, "
+            "models, or core configuration."
+        ),
+        mimeType="text/markdown",
+    ),
+    types.Resource(
+        uri="docs://t1/cli",  # type: ignore[arg-type]
+        name="CLI Package Docs / Documentacion del paquete CLI",
+        description=(
+            "Read when working with the Typer CLI commands, command-line usage, or "
+            "terminal workflows."
+        ),
+        mimeType="text/markdown",
+    ),
+    types.Resource(
+        uri="docs://t1/mcp",  # type: ignore[arg-type]
+        name="MCP Package Docs / Documentacion del paquete MCP",
+        description=(
+            "Read when working with the MCP server, tools, prompts, resources, or AI "
+            "assistant integration."
+        ),
         mimeType="text/markdown",
     ),
 ]
@@ -216,10 +247,42 @@ _SHIPMENT_TEMPLATE = types.ResourceTemplate(
     mimeType="application/json",
 )
 
+_DOCS_TEMPLATE = types.ResourceTemplate(
+    uriTemplate="docs://t1/{package}",
+    name="Package Documentation / Documentacion de paquete",
+    description=(
+        "Internal package documentation. Read when working with a specific package: "
+        "core, cli, or mcp."
+    ),
+    mimeType="text/markdown",
+)
+
+
+def _package_docs(package: str) -> str:
+    docs_root = Path(__file__).resolve().parents[4]
+    docs_map = {
+        "core": docs_root / "core" / "README.md",
+        "cli": docs_root / "cli" / "README.md",
+        "mcp": docs_root / "mcp" / "README.md",
+    }
+    path = docs_map.get(package)
+    if not path or not path.exists():
+        raise FileNotFoundError(f"Docs para '{package}' no encontradas en {path}")
+    return path.read_text()
+
 
 def _read(uri: str, get_client: Callable) -> list[types.TextResourceContents]:
-    client = get_client()
     uri_str = str(uri)
+
+    if uri_str.startswith("docs://t1/"):
+        package = uri_str.removeprefix("docs://t1/")
+        return [
+            types.TextResourceContents(
+                uri=uri,
+                mimeType="text/markdown",
+                text=_package_docs(package),
+            )
+        ]  # type: ignore[arg-type]
 
     if uri_str == "t1shipments://developer-instructions":
         return [
@@ -229,6 +292,8 @@ def _read(uri: str, get_client: Callable) -> list[types.TextResourceContents]:
                 text=_DEVELOPER_INSTRUCTIONS_MD,
             )
         ]  # type: ignore[arg-type]
+
+    client = get_client()
 
     if uri_str == "t1shipments://balance":
         data = client.balance().model_dump()
@@ -266,7 +331,7 @@ def register(server: Server, get_client: Callable) -> None:
 
     @server.list_resource_templates()
     async def list_resource_templates() -> list[types.ResourceTemplate]:
-        return [_SHIPMENT_TEMPLATE]
+        return [_SHIPMENT_TEMPLATE, _DOCS_TEMPLATE]
 
     @server.read_resource()
     async def read_resource(uri: types.AnyUrl) -> list[types.TextResourceContents]:
