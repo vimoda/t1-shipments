@@ -465,6 +465,60 @@ Point to a specific tag / commit / branch:
 | Claude Desktop (Windows) | `%APPDATA%\Claude\claude_desktop_config.json` |
 | Claude Code | `.claude/mcp_config.json` in your project |
 
+#### opencode
+
+Add to your `opencode.json` or `~/.config/opencode/opencode.json`:
+
+**Via `uv` — from a cloned repository:**
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "t1shipments": {
+      "type": "local",
+      "command": ["uv", "run", "--directory", "/path/to/t1-shipments", "t1shipments-mcp"],
+      "env": {
+        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
+        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
+        "T1_SHOP_ID":       "${T1_SHOP_ID}",
+        "T1_USERNAME":      "${T1_USERNAME}",
+        "T1_PASSWORD":      "${T1_PASSWORD}",
+        "T1_ENV":           "${T1_ENV}",
+        "T1_COMERCE_ID":    "${T1_COMERCE_ID}",
+        "T1_LOG_LEVEL":     "${T1_LOG_LEVEL}"
+      },
+      "enabled": true
+    }
+  }
+}
+```
+
+**Via `uvx` — without cloning the repo (runs from GitHub on demand):**
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "t1shipments": {
+      "type": "local",
+      "command": ["uvx", "--from", "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp", "t1shipments-mcp"],
+      "env": {
+        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
+        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
+        "T1_SHOP_ID":       "${T1_SHOP_ID}",
+        "T1_USERNAME":      "${T1_USERNAME}",
+        "T1_PASSWORD":      "${T1_PASSWORD}",
+        "T1_ENV":           "${T1_ENV}",
+        "T1_COMERCE_ID":    "${T1_COMERCE_ID}",
+        "T1_LOG_LEVEL":     "${T1_LOG_LEVEL}"
+      },
+      "enabled": true
+    }
+  }
+}
+```
+
 #### Test the installation
 
 ```bash
