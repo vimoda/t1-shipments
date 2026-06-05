@@ -15,6 +15,7 @@ class TrackingResource(BaseResource):
             raise ValueError(f"API error: {data.get('message', 'Unknown error')}")
 
         detail = data["detail"]
+        print(detail)
         return TrackingState(
             guide=detail["guia"],
             current_status=detail["estatus_actual"],
