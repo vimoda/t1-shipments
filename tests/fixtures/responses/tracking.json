@@ -1,22 +1,17 @@
 {
   "success": true,
   "detail": {
+    "id": "ev-001",
+    "codigo": "IT",
+    "descripcion": "En tránsito",
+    "familia_interna": "En tránsito",
+    "familia_generica": "In Process",
     "guia": "GUIDE123",
-    "estatus_actual": "En tránsito",
-    "fecha_estimada_entrega": "2024-01-20",
-    "historial": [
-      {
-        "fecha": "2024-01-15",
-        "ubicacion": "CDMX",
-        "estatus": "Recolectado",
-        "descripcion": "Paquete recolectado en origen"
-      },
-      {
-        "fecha": "2024-01-16",
-        "ubicacion": "Guadalajara",
-        "estatus": "En tránsito",
-        "descripcion": "En camino a destino"
-      }
-    ]
+    "fecha_estimada": "2024-01-20 00:00:00",
+    "id_mensajeria": 1,
+    "nombre_mensajeria": "DHL",
+    "tracking_link": "https://t1envios.com/track/t?trackingnumber=GUIDE123",
+    "zona_horaria": "-06:00",
+    "fecha": "2024-01-16 10:30:00"
   }
 }

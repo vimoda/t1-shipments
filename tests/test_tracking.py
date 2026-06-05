@@ -13,9 +13,7 @@ def test_track_state_success(httpx_mock, client):
     result = client.track_state("GUIDE123")
     assert result.guide == "GUIDE123"
     assert result.current_status == "En tránsito"
-    assert result.estimated_delivery_date == "2024-01-20"
-    assert len(result.history) == 2
-    assert result.history[0].status == "Recolectado"
+    assert result.estimated_delivery_date == "2024-01-20 00:00:00"
 
 
 def test_track_state_not_found(httpx_mock, client):

@@ -15,20 +15,11 @@ class TrackingResource(BaseResource):
             raise ValueError(f"API error: {data.get('message', 'Unknown error')}")
 
         detail = data["detail"]
-        print(detail)
         return TrackingState(
             guide=detail["guia"],
-            current_status=detail["estatus_actual"],
-            estimated_delivery_date=detail["fecha_estimada_entrega"],
-            history=[
-                TrackingHistoryEvent(
-                    date=e["fecha"],
-                    location=e["ubicacion"],
-                    status=e["estatus"],
-                    description=e["descripcion"],
-                )
-                for e in detail.get("historial", [])
-            ],
+            current_status=detail["descripcion"],
+            estimated_delivery_date=detail["fecha_estimada"],
+            history=[],
         )
 
     def track_detail(self, guide: str) -> TrackingResponse:
