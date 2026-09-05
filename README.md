@@ -203,11 +203,11 @@ client = T1Client(..., token_storage=HybridStorage())
 client = T1Client(..., token_storage=InMemoryStorage())
 ```
 
-#### Load Config from Environment
+#### Load Config from Environment / Storage
 
 ```python
-# Reads T1_CLIENT_ID, T1_CLIENT_SECRET, T1_SHOP_ID, etc. from env / .env
-with T1Client.from_settings() as client:
+# Pass credentials explicitly, or load from stored session (t1 auth login)
+with T1Client.from_settings(client_id="YOUR_CLIENT_ID", client_secret="YOUR_CLIENT_SECRET") as client:
     client.login("username", "password")
     print(client.balance())
 ```
@@ -377,7 +377,8 @@ uv run t1shipments-mcp
 
 Once `t1-shipments-mcp` is installed, configure your MCP client with the JSON block that matches your installation method.
 
-> ⚠️ **Environment variables:** Your MCP client must pass `T1_CLIENT_ID` and `T1_CLIENT_SECRET` in the `env` block. Do NOT use `${VAR}` syntax unless you are sure your client supports interpolation — instead, put the actual values directly (e.g. `"T1_CLIENT_ID": "tu-client-id-real"`). If the server fails to start silently, this is likely the cause.
+> ⚠️ **Client credentials:** Your MCP client must pass `--client-id` and `--client-secret` as command line arguments in the `args` array.
+> Replace placeholders with your actual credentials.
 
 #### Via `uvx` (no installation — runs from GitHub on demand)
 
@@ -389,11 +390,13 @@ Once `t1-shipments-mcp` is installed, configure your MCP client with the JSON bl
       "args": [
         "--from",
         "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp",
-        "t1shipments-mcp"
+        "t1shipments-mcp",
+        "--client-id",
+        "${T1_CLIENT_ID}",
+        "--client-secret",
+        "${T1_CLIENT_SECRET}"
       ],
       "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
         "T1_USERNAME":      "${T1_USERNAME}",
         "T1_PASSWORD":      "${T1_PASSWORD}",
         "T1_ENV":           "dev",
@@ -409,7 +412,7 @@ Once `t1-shipments-mcp` is installed, configure your MCP client with the JSON bl
 Point to a specific tag / commit / branch:
 
 ```json
-"args": ["--from", "git+https://github.com/vimoda/t1-shipments@v0.1.0#subdirectory=packages/mcp", "t1shipments-mcp"]
+"args": ["--from", "git+https://github.com/vimoda/t1-shipments@v0.1.0#subdirectory=packages/mcp", "t1shipments-mcp", "--client-id", "${T1_CLIENT_ID}", "--client-secret", "${T1_CLIENT_SECRET}"]
 ```
 
 #### Via `uv` — from a cloned repository
@@ -419,10 +422,17 @@ Point to a specific tag / commit / branch:
   "mcpServers": {
     "t1shipments": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/t1-shipments", "t1shipments-mcp"],
+      "args": [
+        "run",
+        "--directory",
+        "/path/to/t1-shipments",
+        "t1shipments-mcp",
+        "--client-id",
+        "${T1_CLIENT_ID}",
+        "--client-secret",
+        "${T1_CLIENT_SECRET}"
+      ],
       "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
         "T1_USERNAME":      "${T1_USERNAME}",
         "T1_PASSWORD":      "${T1_PASSWORD}",
         "T1_ENV":           "dev",
@@ -442,9 +452,13 @@ Point to a specific tag / commit / branch:
   "mcpServers": {
     "t1shipments": {
       "command": "t1shipments-mcp",
+      "args": [
+        "--client-id",
+        "${T1_CLIENT_ID}",
+        "--client-secret",
+        "${T1_CLIENT_SECRET}"
+      ],
       "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
         "T1_USERNAME":      "${T1_USERNAME}",
         "T1_PASSWORD":      "${T1_PASSWORD}",
         "T1_ENV":           "dev",
@@ -477,10 +491,18 @@ Add to your `opencode.json` or `~/.config/opencode/opencode.json`:
   "mcp": {
     "t1shipments": {
       "type": "local",
-      "command": ["uv", "run", "--directory", "/path/to/t1-shipments", "t1shipments-mcp"],
+      "command": [
+        "uv",
+        "run",
+        "--directory",
+        "/path/to/t1-shipments",
+        "t1shipments-mcp",
+        "--client-id",
+        "${T1_CLIENT_ID}",
+        "--client-secret",
+        "${T1_CLIENT_SECRET}"
+      ],
       "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
         "T1_SHOP_ID":       "${T1_SHOP_ID}",
         "T1_USERNAME":      "${T1_USERNAME}",
         "T1_PASSWORD":      "${T1_PASSWORD}",
@@ -502,10 +524,17 @@ Add to your `opencode.json` or `~/.config/opencode/opencode.json`:
   "mcp": {
     "t1shipments": {
       "type": "local",
-      "command": ["uvx", "--from", "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp", "t1shipments-mcp"],
+      "command": [
+        "uvx",
+        "--from",
+        "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp",
+        "t1shipments-mcp",
+        "--client-id",
+        "${T1_CLIENT_ID}",
+        "--client-secret",
+        "${T1_CLIENT_SECRET}"
+      ],
       "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
         "T1_SHOP_ID":       "${T1_SHOP_ID}",
         "T1_USERNAME":      "${T1_USERNAME}",
         "T1_PASSWORD":      "${T1_PASSWORD}",
@@ -616,19 +645,20 @@ python -m t1shipments.mcp.server
 
 ## Configuration
 
-Set environment variables (or use a `.env` file):
+API credentials (`client_id` and `client_secret`) are supplied directly as parameters:
+- **SDK**: Passed to `T1Client(client_id=..., client_secret=...)` or `T1Client.from_settings(client_id=..., client_secret=...)`.
+- **CLI**: Passed via `t1 auth login --client-id ... --client-secret ...` (and persisted in local keyring/file storage).
+- **MCP**: Passed via `--client-id` and `--client-secret` arguments in MCP runner configuration.
+
+Optional environment variables (or in a `.env` file):
 
 ```env
-T1_CLIENT_ID=your_client_id
-T1_CLIENT_SECRET=your_client_secret
 T1_BASE_URL=https://api.t1envios.com
 T1_SHOP_ID=your_shop_id
 ```
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `T1_CLIENT_ID` | Yes | — | Keycloak client ID |
-| `T1_CLIENT_SECRET` | Yes | — | Keycloak client secret |
 | `T1_BASE_URL` | No | `https://api.t1envios.com` | API base URL |
 | `T1_SHOP_ID` | No | — | Commerce ID — sent as `comercio_id` on every request |
 | `T1_USERNAME` | No | — | T1Envios account email (auto-login in MCP) |

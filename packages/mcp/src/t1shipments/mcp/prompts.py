@@ -409,7 +409,7 @@ def _get_prompt(name: str, arguments: dict | None) -> types.GetPromptResult:
                 "The user is asking about the T1Envios Python SDK. Read the full "
                 "`t1shipments://developer-instructions` resource and focus on the "
                 "'Python SDK' section. Explain T1Client, how to configure it via "
-                "environment variables (T1_CLIENT_ID, T1_CLIENT_SECRET, etc.), "
+                "input parameters (client_id, client_secret), "
                 "and show a usage example with QuoteRequest and ShipmentRequest. "
                 "Emphasize that quote() is free and create_shipment() has monetary cost. "
                 "Always respond in the user's language."

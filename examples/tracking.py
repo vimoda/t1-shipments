@@ -1,14 +1,14 @@
 """Example: tracking shipments with state and detail.
-
-Expects T1_CLIENT_ID, T1_CLIENT_SECRET, T1_USERNAME, T1_PASSWORD
-in the environment or .env file.
 """
 
 import os
 
 from t1shipments.core.client import T1Client
 
-client = T1Client.from_settings()
+client = T1Client.from_settings(
+    client_id="YOUR_CLIENT_ID",
+    client_secret="YOUR_CLIENT_SECRET",
+)
 
 with client:
     client.login(

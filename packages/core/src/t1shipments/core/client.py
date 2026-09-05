@@ -123,14 +123,40 @@ class T1Client:
         self.close()
 
     @classmethod
-    def from_settings(cls, **kwargs: Any) -> "T1Client":
-        from .config import Settings
+    def from_settings(
+        cls,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        **kwargs: Any,
+    ) -> "T1Client":
         from .auth.storage import HybridStorage
-        s = Settings()  # type: ignore[call-arg]
-        kwargs.setdefault("token_storage", HybridStorage())
+        from .config import Settings
+        from .exceptions import ConfigError
+
+        s = Settings()
+        storage = kwargs.get("token_storage")
+        if storage is None:
+            storage = HybridStorage()
+            kwargs["token_storage"] = storage
+
+        resolved_client_id = client_id
+        resolved_client_secret = client_secret
+
+        if not resolved_client_id or not resolved_client_secret:
+            stored = storage.load()
+            if stored:
+                resolved_client_id = resolved_client_id or stored.client_id
+                resolved_client_secret = resolved_client_secret or stored.client_secret
+
+        if not resolved_client_id or not resolved_client_secret:
+            raise ConfigError(
+                "client_id and client_secret are required. Provide them as arguments "
+                "or authenticate first via 't1 auth login'."
+            )
+
         return cls(
-            client_id=s.client_id,
-            client_secret=s.client_secret.get_secret_value(),
+            client_id=resolved_client_id,
+            client_secret=resolved_client_secret,
             endpoints=s.endpoints(),
             timeout=s.timeout,
             shop_id=s.shop_id,

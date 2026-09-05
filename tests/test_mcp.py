@@ -163,7 +163,7 @@ class TestPrompts:
         result = prompts_module._get_prompt("developer_instructions", {"topic": "sdk"})
         text = result.messages[0].content.text
         assert "T1Client" in text
-        assert "T1_CLIENT_ID" in text
+        assert "client_id" in text
         assert "user's language" in text
 
     def test_developer_instructions_api_topic(self):
@@ -255,7 +255,7 @@ class TestResources:
         text = contents[0].text
         assert "T1Envios" in text
         assert "T1Client.from_settings" in text
-        assert "T1_CLIENT_ID" in text
+        assert "client_id" in text
         assert "/quote/create-with-quote" in text
         assert "Authorization: Bearer" in text
         assert "QuoteRequest" in text

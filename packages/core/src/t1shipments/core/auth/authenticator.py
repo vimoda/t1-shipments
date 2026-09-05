@@ -56,6 +56,8 @@ class Authenticator:
 
         data = resp.json()
         token = self._parse_token(data)
+        token.client_id = self._client_id
+        token.client_secret = self._client_secret
         self._token = token
         self._storage.save(token)
         log.debug("Login successful, token expires at %s", token.expires_at)
@@ -83,6 +85,8 @@ class Authenticator:
 
         data = resp.json()
         token = self._parse_token(data)
+        token.client_id = self._client_id
+        token.client_secret = self._client_secret
         self._token = token
         self._storage.save(token)
         return token
@@ -92,6 +96,10 @@ class Authenticator:
             stored = self._storage.load()
             if stored:
                 self._token = stored
+                if not self._client_id and stored.client_id:
+                    self._client_id = stored.client_id
+                if not self._client_secret and stored.client_secret:
+                    self._client_secret = stored.client_secret
 
         if self._token is None:
             raise SessionExpiredError("No active session. Run: t1 auth login")

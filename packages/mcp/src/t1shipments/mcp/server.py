@@ -19,6 +19,14 @@ server = Server("t1shipments")
 
 # Singleton — shared across all tool calls to reuse httpx.Client and in-memory token.
 _CLIENT: T1Client | None = None
+_CLIENT_ARGS: dict[str, str | None] = {"client_id": None, "client_secret": None}
+
+
+def set_credentials(client_id: str | None, client_secret: str | None) -> None:
+    global _CLIENT_ARGS
+    _CLIENT_ARGS["client_id"] = client_id
+    _CLIENT_ARGS["client_secret"] = client_secret
+
 
 # Register prompts and resources (decorators bind to server at import time)
 prompts_module.register(server, lambda: _get_client())
@@ -30,9 +38,17 @@ def _get_client() -> T1Client:
     if _CLIENT is None:
         from ..core.config import Settings
 
-        s = Settings()  # type: ignore[call-arg]
+        s = Settings()
+        client_id = _CLIENT_ARGS.get("client_id")
+        client_secret = _CLIENT_ARGS.get("client_secret")
+
         # MCP server is always headless — InMemoryStorage avoids keychain popups.
-        _CLIENT = T1Client.from_settings(token_storage=InMemoryStorage(), auto_refresh=False)
+        _CLIENT = T1Client.from_settings(
+            client_id=client_id,
+            client_secret=client_secret,
+            token_storage=InMemoryStorage(),
+            auto_refresh=False,
+        )
 
         # Auto-login if credentials are present in env — no need to call auth_login tool.
         if s.username and s.password:
@@ -65,25 +81,29 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
         ]
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     """Entry point for uvx / pip install t1-shipments-mcp."""
+    import argparse
+    import asyncio
     import sys
 
-    try:
-        from t1shipments.core.config import Settings
+    parser = argparse.ArgumentParser(description="T1Envios MCP Server")
+    parser.add_argument("--client-id", dest="client_id", help="T1 API Client ID")
+    parser.add_argument("--client-secret", dest="client_secret", help="T1 API Client Secret")
+    args, _ = parser.parse_known_args(argv)
 
-        Settings()  # validates required env vars via pydantic-settings
-    except Exception:
+    if not args.client_id or not args.client_secret:
         print(
-            "❌ Faltan variables de entorno requeridas:\n"
-            "   T1_CLIENT_ID, T1_CLIENT_SECRET\n\n"
-            "Opcionales: T1_BASE_URL, T1_SHOP_ID, T1_USERNAME, T1_PASSWORD, T1_TIMEOUT\n\n"
-            "Agrega estas variables al bloque 'env' de tu configuración MCP.",
+            "❌ Faltan argumentos requeridos:\n"
+            "   --client-id, --client-secret\n\n"
+            "Opcionales (vía env):\n"
+            "   T1_BASE_URL, T1_SHOP_ID, T1_USERNAME, T1_PASSWORD, T1_TIMEOUT\n\n"
+            "Agrega estos argumentos al bloque 'args' de tu configuración MCP.",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    import asyncio
+    set_credentials(args.client_id, args.client_secret)
 
     async def _run() -> None:
         async with mcp.server.stdio.stdio_server() as (read, write):

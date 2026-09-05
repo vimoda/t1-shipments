@@ -25,12 +25,11 @@ from t1shipments.core.client import T1Client
 
 ### Configuration
 
-Set these environment variables (prefix `T1_`):
+Pass `client_id` and `client_secret` as input parameters (or load from stored session via CLI login).
+Optional environment variables (prefix `T1_`):
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `T1_CLIENT_ID` | Yes | — | API client ID |
-| `T1_CLIENT_SECRET` | Yes | — | API client secret |
 | `T1_USERNAME` | No | — | Auto-login username |
 | `T1_PASSWORD` | No | — | Auto-login password |
 | `T1_ENV` | No | `dev` | Preset: `dev` or `prod` |

@@ -17,14 +17,8 @@ pip install "t1-shipments-mcp @ git+https://github.com/vimoda/t1-shipments#subdi
 ## Inicio rápido
 
 ```bash
-# Configura credenciales
-export T1_CLIENT_ID="tu-client-id"
-export T1_CLIENT_SECRET="tu-client-secret"
-export T1_USERNAME="usuario@example.com"   # auto-login opcional
-export T1_PASSWORD="tu-password"            # auto-login opcional
-
-# Inicia el servidor
-t1shipments-mcp
+# Inicia el servidor pasando las credenciales como argumentos
+t1shipments-mcp --client-id "tu-client-id" --client-secret "tu-client-secret"
 ```
 
 ## Configuración para Asistentes de IA
@@ -38,10 +32,14 @@ Agrega a tu `claude_desktop_config.json`:
   "mcpServers": {
     "t1shipments": {
       "command": "uv",
-      "args": ["run", "--directory", "/ruta/a/t1-shipments", "t1shipments-mcp"],
+      "args": [
+        "run",
+        "--directory", "/ruta/a/t1-shipments",
+        "t1shipments-mcp",
+        "--client-id", "tu-client-id",
+        "--client-secret", "tu-client-secret"
+      ],
       "env": {
-        "T1_CLIENT_ID": "tu-client-id",
-        "T1_CLIENT_SECRET": "tu-client-secret",
         "T1_USERNAME": "usuario@example.com",
         "T1_PASSWORD": "tu-password",
         "T1_SHOP_ID": "commerce-id-opcional"
@@ -54,7 +52,7 @@ Agrega a tu `claude_desktop_config.json`:
 O instala vía CLI:
 
 ```bash
-t1 mcp install
+t1 mcp install --client-id tu-client-id --client-secret tu-client-secret
 ```
 
 ### opencode
@@ -69,10 +67,18 @@ Agrega a tu `opencode.json` o `~/.config/opencode/opencode.json`:
   "mcp": {
     "t1shipments": {
       "type": "local",
-      "command": ["uv", "run", "--directory", "/ruta/a/t1-shipments", "t1shipments-mcp"],
+      "command": [
+        "uv",
+        "run",
+        "--directory",
+        "/ruta/a/t1-shipments",
+        "t1shipments-mcp",
+        "--client-id",
+        "${T1_CLIENT_ID}",
+        "--client-secret",
+        "${T1_CLIENT_SECRET}"
+      ],
       "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
         "T1_SHOP_ID":       "${T1_SHOP_ID}",
         "T1_USERNAME":      "${T1_USERNAME}",
         "T1_PASSWORD":      "${T1_PASSWORD}",
@@ -94,10 +100,17 @@ Agrega a tu `opencode.json` o `~/.config/opencode/opencode.json`:
   "mcp": {
     "t1shipments": {
       "type": "local",
-      "command": ["uvx", "--from", "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp", "t1shipments-mcp"],
+      "command": [
+        "uvx",
+        "--from",
+        "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp",
+        "t1shipments-mcp",
+        "--client-id",
+        "${T1_CLIENT_ID}",
+        "--client-secret",
+        "${T1_CLIENT_SECRET}"
+      ],
       "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
         "T1_SHOP_ID":       "${T1_SHOP_ID}",
         "T1_USERNAME":      "${T1_USERNAME}",
         "T1_PASSWORD":      "${T1_PASSWORD}",
@@ -142,12 +155,19 @@ Agrega a tu `opencode.json` o `~/.config/opencode/opencode.json`:
 | `track` | Guía al usuario para rastrear un paquete |
 | `pickup` | Guía al usuario para agendar una recolección |
 
-## Variables de Entorno
+## Configuración
+
+### Argumentos Requeridos (CLI / args)
+
+| Argumento | Descripción |
+|---|---|
+| `--client-id` | ID del cliente API |
+| `--client-secret` | Secreto del cliente API |
+
+### Variables de Entorno Opcionales
 
 | Variable | Descripción | Default |
 |---|---|---|
-| `T1_CLIENT_ID` | ID del cliente API | — |
-| `T1_CLIENT_SECRET` | Secreto del cliente API | — |
 | `T1_USERNAME` | Usuario para auto-login | — |
 | `T1_PASSWORD` | Contraseña para auto-login | — |
 | `T1_SHOP_ID` | ID de comercio | — |

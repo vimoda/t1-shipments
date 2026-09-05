@@ -33,7 +33,7 @@ mypy_path = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["tests"]
+pythonpath = ["tests", "packages/core/src", "packages/cli/src", "packages/mcp/src"]
 addopts = "--cov=t1shipments --cov-report=term-missing"
 
 [tool.coverage.run]

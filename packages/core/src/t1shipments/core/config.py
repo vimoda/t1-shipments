@@ -77,8 +77,6 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="T1_", env_file=".env", extra="ignore")
 
-    client_id: str
-    client_secret: SecretStr
     username: str | None = None
     password: SecretStr | None = None
     env: Literal["dev", "prod"] = "dev"

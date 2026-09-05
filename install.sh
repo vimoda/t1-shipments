@@ -34,11 +34,13 @@ mcp_json() {
       "args": [
         "--from",
         "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp",
-        "t1shipments-mcp"
+        "t1shipments-mcp",
+        "--client-id",
+        "<tu_client_id>",
+        "--client-secret",
+        "<tu_client_secret>"
       ],
       "env": {
-        "T1_CLIENT_ID":     "<tu_client_id>",
-        "T1_CLIENT_SECRET": "<tu_client_secret>",
         "T1_BASE_URL":      "https://api.t1envios.com",
         "T1_SHOP_ID":       "<tu_shop_id>"
       }

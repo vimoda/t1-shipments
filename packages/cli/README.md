@@ -25,7 +25,8 @@ t1 --help
 ### Authentication
 
 ```bash
-t1 auth login --username user@example.com
+# Provide client-id and client-secret as arguments (or enter interactively when prompted)
+t1 auth login --client-id YOUR_CLIENT_ID --client-secret YOUR_CLIENT_SECRET --username user@example.com
 t1 auth status
 t1 auth refresh
 t1 auth logout
@@ -43,12 +44,13 @@ t1 auth logout
 | `t1 carriers` | List carriers | `t1 carriers` |
 | `t1 pickup` | Schedule pickup | `t1 pickup --carrier REDPACK --contact-name Juan ...` |
 | `t1 label` | Download label PDF | `t1 label --guide-link LINK -o label.pdf` |
-| `t1 mcp install` | Install MCP in Claude Desktop | `t1 mcp install` |
-| `t1 mcp run` | Start MCP stdio server | `t1 mcp run` |
+| `t1 mcp install` | Install MCP in Claude Desktop | `t1 mcp install --client-id YOUR_ID --client-secret YOUR_SECRET` |
+| `t1 mcp run` | Start MCP stdio server | `t1 mcp run --client-id YOUR_ID --client-secret YOUR_SECRET` |
 
 ### Environment
 
-Set `T1_CLIENT_ID`, `T1_CLIENT_SECRET`, `T1_USERNAME`, `T1_PASSWORD`, `T1_SHOP_ID`, `T1_ENV` (`dev`/`prod`), etc.
+Optional: Set `T1_USERNAME`, `T1_PASSWORD`, `T1_SHOP_ID`, `T1_ENV` (`dev`/`prod`), etc.
+Credentials (`client-id` and `client-secret`) are passed as CLI parameters to `t1 auth login` and persisted securely in system keyring/file storage.
 
 ### Output
 

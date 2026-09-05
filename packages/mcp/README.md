@@ -17,14 +17,8 @@ pip install "t1-shipments-mcp @ git+https://github.com/vimoda/t1-shipments#subdi
 ## Quick Start
 
 ```bash
-# Set credentials
-export T1_CLIENT_ID="your-client-id"
-export T1_CLIENT_SECRET="your-client-secret"
-export T1_USERNAME="user@example.com"   # optional auto-login
-export T1_PASSWORD="your-password"      # optional auto-login
-
-# Run the server
-t1shipments-mcp
+# Run the server with credentials passed as arguments
+t1shipments-mcp --client-id "your-client-id" --client-secret "your-client-secret"
 ```
 
 ## Configuration for AI Assistants
@@ -38,10 +32,14 @@ Add to your `claude_desktop_config.json`:
   "mcpServers": {
     "t1shipments": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/t1-shipments", "t1shipments-mcp"],
+      "args": [
+        "run",
+        "--directory", "/path/to/t1-shipments",
+        "t1shipments-mcp",
+        "--client-id", "your-client-id",
+        "--client-secret", "your-client-secret"
+      ],
       "env": {
-        "T1_CLIENT_ID": "your-client-id",
-        "T1_CLIENT_SECRET": "your-client-secret",
         "T1_USERNAME": "user@example.com",
         "T1_PASSWORD": "your-password",
         "T1_SHOP_ID": "optional-commerce-id"
@@ -69,10 +67,18 @@ Add to your `opencode.json` or `~/.config/opencode/opencode.json`:
   "mcp": {
     "t1shipments": {
       "type": "local",
-      "command": ["uv", "run", "--directory", "/path/to/t1-shipments", "t1shipments-mcp"],
+      "command": [
+        "uv",
+        "run",
+        "--directory",
+        "/path/to/t1-shipments",
+        "t1shipments-mcp",
+        "--client-id",
+        "${T1_CLIENT_ID}",
+        "--client-secret",
+        "${T1_CLIENT_SECRET}"
+      ],
       "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
         "T1_SHOP_ID":       "${T1_SHOP_ID}",
         "T1_USERNAME":      "${T1_USERNAME}",
         "T1_PASSWORD":      "${T1_PASSWORD}",
@@ -94,10 +100,17 @@ Add to your `opencode.json` or `~/.config/opencode/opencode.json`:
   "mcp": {
     "t1shipments": {
       "type": "local",
-      "command": ["uvx", "--from", "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp", "t1shipments-mcp"],
+      "command": [
+        "uvx",
+        "--from",
+        "git+https://github.com/vimoda/t1-shipments#subdirectory=packages/mcp",
+        "t1shipments-mcp",
+        "--client-id",
+        "${T1_CLIENT_ID}",
+        "--client-secret",
+        "${T1_CLIENT_SECRET}"
+      ],
       "env": {
-        "T1_CLIENT_ID":     "${T1_CLIENT_ID}",
-        "T1_CLIENT_SECRET": "${T1_CLIENT_SECRET}",
         "T1_SHOP_ID":       "${T1_SHOP_ID}",
         "T1_USERNAME":      "${T1_USERNAME}",
         "T1_PASSWORD":      "${T1_PASSWORD}",
@@ -142,12 +155,19 @@ Add to your `opencode.json` or `~/.config/opencode/opencode.json`:
 | `track` | Guide the user through tracking a package |
 | `pickup` | Guide the user through scheduling a pickup |
 
-## Environment Variables
+## Configuration
+
+### Required Arguments (CLI / args)
+
+| Argument | Description |
+|---|---|
+| `--client-id` | API client ID |
+| `--client-secret` | API client secret |
+
+### Optional Environment Variables
 
 | Variable | Description | Default |
 |---|---|---|
-| `T1_CLIENT_ID` | API client ID | — |
-| `T1_CLIENT_SECRET` | API client secret | — |
 | `T1_USERNAME` | Auto-login user | — |
 | `T1_PASSWORD` | Auto-login password | — |
 | `T1_SHOP_ID` | Commerce ID | — |

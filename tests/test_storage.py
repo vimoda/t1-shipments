@@ -76,3 +76,34 @@ def test_hybrid_falls_back_to_file(monkeypatch, tmp_path, sample_token):
     loaded = storage.load()
     assert loaded is not None
     assert loaded.access_token == "abc"
+
+
+def test_token_serialization_with_client_credentials():
+    token = Token(
+        access_token="tok",
+        refresh_token="ref",
+        client_id="my-client-id",
+        client_secret="my-client-secret",
+    )
+    d = token.to_dict()
+    assert d["client_id"] == "my-client-id"
+    assert d["client_secret"] == "my-client-secret"
+
+    restored = Token.from_dict(d)
+    assert restored.client_id == "my-client-id"
+    assert restored.client_secret == "my-client-secret"
+
+
+def test_file_storage_saves_and_loads_client_credentials(tmp_credentials):
+    token = Token(
+        access_token="tok",
+        refresh_token="ref",
+        client_id="cid-123",
+        client_secret="csec-456",
+    )
+    storage = FileStorage(path=tmp_credentials)
+    storage.save(token)
+    loaded = storage.load()
+    assert loaded is not None
+    assert loaded.client_id == "cid-123"
+    assert loaded.client_secret == "csec-456"

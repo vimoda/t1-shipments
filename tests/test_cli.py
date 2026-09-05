@@ -80,8 +80,47 @@ def test_auth_login(mock_settings_cls, mock_cls):
     mock_cls.from_settings.return_value = mock_client
     mock_client.login.return_value.refresh_token = "ref"
     mock_client.login.return_value.expires_at = datetime.now(tz=UTC) + timedelta(hours=1)
-    result = runner.invoke(app, ["auth", "login"], input="user@example.com\nsecret123\n")
+    result = runner.invoke(
+        app,
+        ["auth", "login"],
+        input="my-client-id\nmy-client-secret\nuser@example.com\nsecret123\n",
+    )
     assert result.exit_code == 0
+    mock_cls.from_settings.assert_called_once_with(
+        client_id="my-client-id", client_secret="my-client-secret"
+    )
+    mock_client.login.assert_called_once_with("user@example.com", "secret123", store_id=None)
+
+
+@patch("t1shipments.cli.auth.T1Client")
+@patch("t1shipments.cli.auth.Settings")
+def test_auth_login_with_flags(mock_settings_cls, mock_cls):
+    mock_settings_cls.return_value.username = None
+    mock_settings_cls.return_value.password = None
+    mock_settings_cls.return_value.commerce_id = None
+    mock_client = MagicMock()
+    mock_cls.from_settings.return_value = mock_client
+    mock_client.login.return_value.refresh_token = "ref"
+    mock_client.login.return_value.expires_at = datetime.now(tz=UTC) + timedelta(hours=1)
+    result = runner.invoke(
+        app,
+        [
+            "auth",
+            "login",
+            "--client-id",
+            "flag-id",
+            "--client-secret",
+            "flag-secret",
+            "-u",
+            "user@example.com",
+            "-p",
+            "secret123",
+        ],
+    )
+    assert result.exit_code == 0
+    mock_cls.from_settings.assert_called_once_with(
+        client_id="flag-id", client_secret="flag-secret"
+    )
     mock_client.login.assert_called_once_with("user@example.com", "secret123", store_id=None)
 
 

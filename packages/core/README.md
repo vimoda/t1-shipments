@@ -70,12 +70,22 @@ with T1Client.from_settings() as client:
 | `download_label(guide_link)` | Download label PDF | No |
 | `inject_token(access, refresh?, expires?)` | Load externally managed token | No |
 
-### Config from environment
+### Configuration and initialization
 
-Set `T1_CLIENT_ID`, `T1_CLIENT_SECRET`, `T1_ENV` (`dev`/`prod`), `T1_SHOP_ID`, `T1_TIMEOUT`, etc. Then:
+Pass `client_id` and `client_secret` directly as input parameters, or load from stored session:
 
 ```python
-client = T1Client.from_settings()
+# Direct parameters (recommended for scripts & integrations):
+client = T1Client(
+    client_id="YOUR_CLIENT_ID",
+    client_secret="YOUR_CLIENT_SECRET",
+)
+
+# Or via from_settings (loads from arguments or stored session):
+client = T1Client.from_settings(
+    client_id="YOUR_CLIENT_ID",
+    client_secret="YOUR_CLIENT_SECRET",
+)
 ```
 
 ### Token storage

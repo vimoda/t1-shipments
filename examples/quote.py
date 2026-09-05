@@ -3,9 +3,11 @@
 from t1shipments.core.client import T1Client
 from t1shipments.core.models.quote import QuoteRequest
 
-# Uses env vars T1_CLIENT_ID, T1_CLIENT_SECRET, and optionally
-# T1_ENV=dev|prod, T1_SHOP_ID, T1_COMMERCE_ID, T1_BASE_URL, T1_AUTH_URL.
-client = T1Client.from_settings()
+# Pass client_id and client_secret as parameters (or load from stored session)
+client = T1Client.from_settings(
+    client_id="YOUR_CLIENT_ID",
+    client_secret="YOUR_CLIENT_SECRET",
+)
 
 with client:
     # Login with your credentials
@@ -58,15 +60,3 @@ with client:
             f"${cost:<8,.2f}"
             f"{days!s:<10}{recommended}"
         )
-
-    # To create a shipment, pass the selected rate's token:
-    #
-    #   token = quote.detail[0]["token"]
-    #   shipment = client.create_shipment(ShipmentRequest(
-    #       quote_token=token,
-    #       content="Documentos",
-    #       origin_first_name="...", ...
-    #       destination_first_name="...", ...
-    #       packages=1,
-    #   ))
-    #   print(f"Guía: {shipment.tracking_number} — {shipment.guide_link}")
