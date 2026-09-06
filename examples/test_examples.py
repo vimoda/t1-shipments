@@ -92,3 +92,33 @@ def test_track_detail(httpx_mock, client):
     assert len(detail.detail) > 0
     for ev in detail.detail:
         print(f"  {ev.date} {ev.time} — {ev.carrier_name}: {ev.description}")
+
+
+def test_as_library_flow(httpx_mock, client):
+    httpx_mock.add_response(
+        url="https://api.example.com/carriers",
+        json=load_fixture("carriers"),
+    )
+    httpx_mock.add_response(
+        url="https://api.example.com/quote/create-with-quote",
+        json=load_fixture("quote"),
+    )
+
+    carriers = client.list_carriers()
+    assert len(carriers) > 0
+
+    req = QuoteRequest(
+        origin_postal_code="06600",
+        destination_postal_code="44100",
+        weight=2,
+        width=20,
+        height=15,
+        length=10,
+        shipping_days=2,
+        insurance=False,
+        package_type=1,
+        packages=1,
+    )
+    quote = client.quote(req)
+    assert quote.success
+    assert len(quote.detail or []) > 0
