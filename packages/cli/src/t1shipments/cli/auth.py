@@ -19,40 +19,39 @@ app = typer.Typer(help="Authentication commands")
 def login(
     client_id: str = typer.Option(None, "--client-id", help="T1 API Client ID"),
     client_secret: str = typer.Option(None, "--client-secret", hide_input=True, help="T1 API Client Secret"),
-    username: str = typer.Option(None, "--username", "-u", help="T1Envios username (or set T1_USERNAME)"),
-    password: str = typer.Option(None, "--password", "-p", hide_input=True, help="T1Envios password (or set T1_PASSWORD)"),
-    store_id: str = typer.Option(None, "--store-id", help="Store ID to embed in token (or set T1_COMMERCE_ID)"),
+    username: str = typer.Option(None, "--username", "-u", help="T1Envios username"),
+    password: str = typer.Option(
+        None, "--password", "-p", hide_input=True, help="T1Envios password"
+    ),
+    store_id: str = typer.Option(
+        None, "--store-id", help="Store ID to embed in token (or set T1_COMMERCE_ID / T1_SHOP_ID)"
+    ),
 ) -> None:
     """Authenticate and persist credentials and tokens."""
     try:
         s = Settings()
 
-        resolved_client_id = client_id
-        resolved_client_secret = client_secret
-        resolved_user = username or (s.username if s.username else None)
-        resolved_pass = password or (s.password.get_secret_value() if s.password else None)
-        resolved_store = store_id or s.commerce_id
+        resolved_client_id = client_id or typer.prompt("Client ID")
+        resolved_client_secret = client_secret or typer.prompt("Client Secret", hide_input=True)
+        resolved_user = username or typer.prompt("Username")
+        resolved_pass = password or typer.prompt("Password", hide_input=True)
+        resolved_store = store_id or s.shop_id or s.commerce_id
 
-        if not resolved_client_id:
-            resolved_client_id = typer.prompt("Client ID")
-        if not resolved_client_secret:
-            resolved_client_secret = typer.prompt("Client Secret", hide_input=True)
-        if not resolved_user:
-            resolved_user = typer.prompt("Username")
-        if not resolved_pass:
-            resolved_pass = typer.prompt("Password", hide_input=True)
-
-        client = T1Client.from_settings(client_id=resolved_client_id, client_secret=resolved_client_secret)
+        client = T1Client.from_settings(
+            client_id=resolved_client_id, client_secret=resolved_client_secret
+        )
         token = client.login(resolved_user, resolved_pass, store_id=resolved_store)
 
         remaining = (token.expires_at - datetime.now(tz=timezone.utc)).total_seconds()
         has_refresh = "✓" if token.refresh_token else "✗"
-        rprint(Panel(
-            f"[green]Login successful.[/green]\n"
-            f"Token válido por [bold]{int(remaining // 60)}m[/bold]. "
-            f"Refresh token: {has_refresh}",
-            title="t1 auth",
-        ))
+        rprint(
+            Panel(
+                f"[green]Login successful.[/green]\n"
+                f"Token válido por [bold]{int(remaining // 60)}m[/bold]. "
+                f"Refresh token: {has_refresh}",
+                title="t1 auth",
+            )
+        )
     except (AuthError, ConfigError, T1Error) as exc:
         rprint(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
@@ -71,7 +70,7 @@ def refresh() -> None:
         raise typer.Exit(1)
     try:
         client = T1Client.from_settings()
-        new_token = client._auth.refresh()
+        new_token = client.refresh()
         remaining = (new_token.expires_at - datetime.now(tz=timezone.utc)).total_seconds()
         rprint(
             f"[green]Token renovado.[/green] "

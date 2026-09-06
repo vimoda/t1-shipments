@@ -64,6 +64,15 @@ class Authenticator:
         return token
 
     def refresh(self) -> Token:
+        if self._token is None:
+            stored = self._storage.load()
+            if stored:
+                self._token = stored
+                if not self._client_id and stored.client_id:
+                    self._client_id = stored.client_id
+                if not self._client_secret and stored.client_secret:
+                    self._client_secret = stored.client_secret
+
         if not self._token or not self._token.refresh_token:
             raise SessionExpiredError("No active session. Run: t1 auth login")
 
@@ -85,6 +94,8 @@ class Authenticator:
 
         data = resp.json()
         token = self._parse_token(data)
+        if not token.refresh_token and self._token and self._token.refresh_token:
+            token.refresh_token = self._token.refresh_token
         token.client_id = self._client_id
         token.client_secret = self._client_secret
         self._token = token

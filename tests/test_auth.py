@@ -74,6 +74,53 @@ def test_refresh_token(httpx_mock, endpoints):
     assert "refresh_token=old-refresh" in body
 
 
+def test_refresh_loads_from_storage_when_token_is_none(httpx_mock, endpoints):
+    httpx_mock.add_response(url=AUTH_URL, json=load_fixture("login"))
+    stored = Token(
+        access_token="old",
+        refresh_token="stored-refresh",
+        expires_at=datetime.now(tz=UTC) - timedelta(hours=1),
+        client_id="cid-123",
+        client_secret="csecret-456",
+    )
+    storage = InMemoryStorage(token=stored)
+    auth = Authenticator(
+        client_id="",
+        client_secret="",
+        endpoints=endpoints,
+        http=httpx.Client(),
+        storage=storage,
+    )
+    # auth._token is None initially
+    assert auth._token is None
+    token = auth.refresh()
+    assert token.access_token == "test-access-token"
+    assert token.client_id == "cid-123"
+    assert token.client_secret == "csecret-456"
+    request = httpx_mock.get_requests()[0]
+    body = request.content.decode()
+    assert "refresh_token=stored-refresh" in body
+    assert "client_id=cid-123" in body
+
+
+def test_refresh_preserves_refresh_token_if_not_in_response(httpx_mock, endpoints):
+    # If OAuth server returns access_token without a new refresh_token
+    httpx_mock.add_response(
+        url=AUTH_URL,
+        json={"access_token": "new-acc", "token_type": "Bearer", "expires_in": 300},
+    )
+    stored = Token(
+        access_token="old",
+        refresh_token="original-refresh",
+        expires_at=datetime.now(tz=UTC) - timedelta(hours=1),
+    )
+    storage = InMemoryStorage(token=stored)
+    auth = _auth(endpoints, storage=storage)
+    token = auth.refresh()
+    assert token.access_token == "new-acc"
+    assert token.refresh_token == "original-refresh"
+
+
 def test_refresh_raises_session_expired_on_failure(httpx_mock, endpoints):
     httpx_mock.add_response(url=AUTH_URL, status_code=401)
     expired = Token(

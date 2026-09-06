@@ -76,6 +76,7 @@ def test_auth_login(mock_settings_cls, mock_cls):
     mock_settings_cls.return_value.username = None
     mock_settings_cls.return_value.password = None
     mock_settings_cls.return_value.commerce_id = None
+    mock_settings_cls.return_value.shop_id = None
     mock_client = MagicMock()
     mock_cls.from_settings.return_value = mock_client
     mock_client.login.return_value.refresh_token = "ref"
@@ -98,6 +99,7 @@ def test_auth_login_with_flags(mock_settings_cls, mock_cls):
     mock_settings_cls.return_value.username = None
     mock_settings_cls.return_value.password = None
     mock_settings_cls.return_value.commerce_id = None
+    mock_settings_cls.return_value.shop_id = None
     mock_client = MagicMock()
     mock_cls.from_settings.return_value = mock_client
     mock_client.login.return_value.refresh_token = "ref"
@@ -139,3 +141,47 @@ def test_auth_status_valid(mock_storage_cls):
     assert result.exit_code == 0
     assert "Válido" in result.output
     assert "Refresh token" in result.output
+
+
+@patch("t1shipments.cli.auth.HybridStorage")
+def test_auth_refresh_no_session(mock_storage_cls):
+    mock_storage_cls.return_value.load.return_value = None
+    result = runner.invoke(app, ["auth", "refresh"])
+    assert result.exit_code == 1
+    assert "No session found" in result.output
+
+
+@patch("t1shipments.cli.auth.HybridStorage")
+def test_auth_refresh_no_refresh_token(mock_storage_cls):
+    mock_storage_cls.return_value.load.return_value = _valid_token()
+    result = runner.invoke(app, ["auth", "refresh"])
+    assert result.exit_code == 1
+    assert "No refresh token stored" in result.output
+
+
+@patch("t1shipments.cli.auth.T1Client")
+@patch("t1shipments.cli.auth.HybridStorage")
+def test_auth_refresh_success(mock_storage_cls, mock_client_cls):
+    token = Token(
+        access_token="old-token",
+        refresh_token="my-refresh-token",
+        expires_at=datetime.now(tz=UTC) + timedelta(minutes=5),
+        client_id="cid",
+        client_secret="csecret",
+    )
+    mock_storage_cls.return_value.load.return_value = token
+    new_token = Token(
+        access_token="new-token",
+        refresh_token="new-refresh",
+        expires_at=datetime.now(tz=UTC) + timedelta(hours=1),
+        client_id="cid",
+        client_secret="csecret",
+    )
+    mock_client = MagicMock()
+    mock_client.refresh.return_value = new_token
+    mock_client_cls.from_settings.return_value = mock_client
+
+    result = runner.invoke(app, ["auth", "refresh"])
+    assert result.exit_code == 0
+    assert "Token renovado" in result.output
+    mock_client.refresh.assert_called_once()

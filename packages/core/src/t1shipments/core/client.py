@@ -62,6 +62,9 @@ class T1Client:
     def login(self, username: str, password: str, store_id: str | None = None) -> Token:
         return self._auth.login(username, password, store_id=store_id)
 
+    def refresh(self) -> Token:
+        return self._auth.refresh()
+
     def logout(self) -> None:
         self._auth.logout()
 
