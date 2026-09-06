@@ -10,7 +10,7 @@ from t1shipments.core.auth.token import Token
 from t1shipments.core.config import Endpoints
 from t1shipments.core.exceptions import AuthError, SessionExpiredError
 
-AUTH_URL = "https://api.example.com/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token"
+AUTH_URL = "https://api.example.com/protocol/openid-connect/token"
 BALANCE_URL = "https://api.example.com/balance/consult"
 
 

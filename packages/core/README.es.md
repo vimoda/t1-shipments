@@ -125,7 +125,7 @@ Todos los modelos son `BaseModel` de Pydantic v2. Se importan desde `t1shipments
 
 ## Flujo de autenticación
 
-1. `login()` → `POST {auth_url}/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token` con payload `application/x-www-form-urlencoded`.
+1. `login()` → `POST {auth_url}/protocol/openid-connect/token` con payload `application/x-www-form-urlencoded`.
 2. El token se refresca automáticamente cuando expira en menos de 60 s (`auto_refresh=True` por defecto).
 3. En caso de 401, el SDK refresca una vez y reintenta.
 

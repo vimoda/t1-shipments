@@ -8,11 +8,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 ENV_PRESETS: dict[str, dict[str, str]] = {
     "dev": {
         "base_url": "https://apiv2.dev.t1envios.com",
-        "auth_base_url": "https://keycloak.dev.plataformat1.com",
+        "auth_base_url": "https://keycloak.dev.plataformat1.com/auth/realms/claroshop-sapi-sa-cv",
     },
     "prod": {
         "base_url": "https://apiv2.t1envios.com",
-        "auth_base_url": "https://keycloak.plataformat1.com",
+        "auth_base_url": "https://keycloak.plataformat1.com/auth/realms/T1",
     },
 }
 
@@ -22,8 +22,8 @@ class Endpoints(BaseModel):
 
     base_url: str = ENV_PRESETS["dev"]["base_url"]
     auth_base_url: str = ENV_PRESETS["dev"]["auth_base_url"]
-    auth: str = "/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token"
-    refresh: str = "/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token"
+    auth: str = "/protocol/openid-connect/token"
+    refresh: str = "/protocol/openid-connect/token"
     quote: str = "/quote/create-with-quote"
     track_state: str = "/rastreo/estado-guia/{guide}"
     track_detail: str = "/rastreo/detail-guia/{guide}"

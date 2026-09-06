@@ -125,7 +125,7 @@ All request/response models are Pydantic v2 `BaseModel` instances. Import from `
 
 ## Auth flow
 
-1. `login()` → `POST {auth_url}/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token` with `application/x-www-form-urlencoded` payload.
+1. `login()` → `POST {auth_url}/protocol/openid-connect/token` with `application/x-www-form-urlencoded` payload.
 2. Token auto-refreshes when expiring within 60 s (`auto_refresh=True` by default).
 3. On 401, SDK refreshes once and retries.
 

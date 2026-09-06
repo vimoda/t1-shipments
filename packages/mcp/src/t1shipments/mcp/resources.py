@@ -129,7 +129,7 @@ with T1Client.from_settings() as client:
 ### Authentication (Keycloak OIDC)
 
 ```
-POST {auth_base_url}/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token
+POST {auth_base_url}/protocol/openid-connect/token
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=password
@@ -143,7 +143,7 @@ grant_type=password
 Token refresh:
 
 ```
-POST {auth_base_url}/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token
+POST {auth_base_url}/protocol/openid-connect/token
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=refresh_token

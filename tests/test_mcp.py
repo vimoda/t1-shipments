@@ -457,7 +457,7 @@ class TestAuthTools:
 
     def test_auth_login(self, httpx_mock, client):
         httpx_mock.add_response(
-            url="https://api.example.com/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token",
+            url="https://api.example.com/protocol/openid-connect/token",
             json=load_fixture("login"),
         )
         result = auth_tools_module.handle("auth_login", {"username": "u", "password": "p"}, client)
@@ -496,7 +496,7 @@ class TestAuthTools:
 
     def test_auth_refresh(self, httpx_mock, client):
         httpx_mock.add_response(
-            url="https://api.example.com/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token",
+            url="https://api.example.com/protocol/openid-connect/token",
             json={"access_token": "new-token", "refresh_token": "new-refresh", "expires_in": 3600},
         )
         result = auth_tools_module.handle("auth_refresh", {"refresh_token": "old-refresh"}, client)
@@ -549,7 +549,7 @@ class TestAutoRefresh:
             expires_at=datetime(2000, 1, 1, tzinfo=UTC),
         )
         httpx_mock.add_response(
-            url="https://api.example.com/auth/realms/claroshop-sapi-sa-cv/protocol/openid-connect/token",
+            url="https://api.example.com/protocol/openid-connect/token",
             json={"access_token": "new-access", "refresh_token": "new-refresh", "expires_in": 3600},
         )
         token = client._auth.ensure_valid()
