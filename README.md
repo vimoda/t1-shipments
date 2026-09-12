@@ -212,6 +212,26 @@ with T1Client.from_settings(client_id="YOUR_CLIENT_ID", client_secret="YOUR_CLIE
     print(client.balance())
 ```
 
+#### Custom Endpoints / Environment
+
+`Endpoints` holds **two independent URLs** — `base_url` (business endpoints) and `auth_base_url` (Keycloak auth server) — each with its own dev/prod default. If a consumer builds `Endpoints` by hand and only overrides `base_url`, `auth_base_url` silently stays on its dev default, so login/refresh keeps hitting dev Keycloak even after pointing business calls at prod.
+
+Use `Endpoints.from_env()` to keep both URLs in sync from a single `env`, overriding only what you need:
+
+```python
+from t1shipments.core.config import Endpoints
+
+# Both base_url and auth_base_url resolve to the "prod" preset
+endpoints = Endpoints.from_env("prod")
+
+# Override base_url only — auth_base_url still resolves correctly from the "prod" preset
+endpoints = Endpoints.from_env("prod", base_url="https://custom.example.com")
+
+client = T1Client(client_id="...", client_secret="...", endpoints=endpoints)
+```
+
+`Settings.endpoints()` (used by the CLI/MCP via `T1Client.from_settings()`) is implemented on top of this same helper, so `T1_ENV` gets the same guarantee.
+
 #### Exception Handling
 
 ```python

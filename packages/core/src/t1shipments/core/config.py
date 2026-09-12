@@ -71,6 +71,26 @@ class Endpoints(BaseModel):
     def set_create_shipment_path(self, path: str) -> None:
         self.create_shipment = path
 
+    @classmethod
+    def from_env(
+        cls,
+        env: Literal["dev", "prod"] = "dev",
+        base_url: str | None = None,
+        auth_base_url: str | None = None,
+    ) -> Endpoints:
+        """Build Endpoints from an env preset, with optional per-field overrides.
+
+        Keeps base_url and auth_base_url in sync for SDK users who build
+        Endpoints directly instead of going through Settings (e.g. when only
+        base_url is customized, auth_base_url still resolves to the matching
+        preset instead of silently staying on dev).
+        """
+        preset = ENV_PRESETS[env]
+        return cls(
+            base_url=base_url or preset["base_url"],
+            auth_base_url=auth_base_url or preset["auth_base_url"],
+        )
+
 
 class Settings(BaseSettings):
     """CLI configuration — reads from env vars prefixed T1_ or .env file."""
@@ -88,9 +108,5 @@ class Settings(BaseSettings):
     retries: int = 3
     log_level: str | None = None
 
-    def endpoints(self) -> "Endpoints":
-        preset = ENV_PRESETS[self.env]
-        return Endpoints(
-            base_url=self.base_url or preset["base_url"],
-            auth_base_url=self.auth_url or preset["auth_base_url"],
-        )
+    def endpoints(self) -> Endpoints:
+        return Endpoints.from_env(self.env, base_url=self.base_url, auth_base_url=self.auth_url)
