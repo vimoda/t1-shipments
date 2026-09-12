@@ -15,6 +15,26 @@ def test_balance_success(httpx_mock, client):
     assert bal.can_ship is True  # amount > 0
 
 
+def test_balance_numeric_commerce_id(httpx_mock, client):
+    httpx_mock.add_response(
+        url="https://api.example.com/balance/consult",
+        json={
+            "success": True,
+            "message": "Consulta realizada correctamente",
+            "detail": {
+                "monto_actual": 938.0600000000001,
+                "comercio_id": 8223,
+                "comercio_id_t1paginas": "204577",
+                "credito": False,
+            },
+        },
+    )
+    bal = client.balance()
+    assert bal.amount == 938.0600000000001
+    assert bal.commerce_id == "8223"
+    assert bal.commerce_id_t1_pages == "204577"
+
+
 def test_balance_can_ship_via_credit(httpx_mock, client):
     httpx_mock.add_response(
         url="https://api.example.com/balance/consult",
