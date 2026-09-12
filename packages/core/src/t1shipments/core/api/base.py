@@ -53,22 +53,24 @@ class BaseResource:
                     headers["shop_id"] = self._shop_id
 
                 log.debug("%s %s", method, url)
-                if log.isEnabledFor(logging.DEBUG):
-                    body = kwargs.get("json")
-                    body_str = json.dumps(body, ensure_ascii=False) if body else ""
-                    curl_headers = " \\\n".join(
-                        f"  -H '{k}: {v}'" for k, v in headers.items()
-                    )
-                    curl = (
-                        f"curl -s -X {method} '{url}'"
-                        + (f" \\\n{curl_headers}" if curl_headers else "")
-                        + (f" \\\n  -H 'Content-Type: application/json'" if body else "")
-                        + (f" \\\n  -d '{body_str}'" if body_str else "")
-                    )
-                    log.debug("curl:\n%s", curl)
+                body = kwargs.get("json")
+                body_str = json.dumps(body, ensure_ascii=False) if body else ""
+                curl_headers = " \\\n".join(f"  -H '{k}: {v}'" for k, v in headers.items())
+                curl = (
+                    f"curl -s -X {method} '{url}'"
+                    + (f" \\\n{curl_headers}" if curl_headers else "")
+                    + (f" \\\n  -H 'Content-Type: application/json'" if body else "")
+                    + (f" \\\n  -d '{body_str}'" if body_str else "")
+                )
+                log.debug("curl:\n%s", curl)
+                print(f"\n[T1_DEBUG] request:\n{curl}\n")  # TODO: quitar debug print
+
                 req = self._http.build_request(method, url, headers=headers, **kwargs)
                 resp = self._http.send(req)
                 log.debug("→ %s", resp.status_code)
+                print(  # TODO: quitar debug print
+                    f"[T1_DEBUG] response: {resp.status_code}\n{resp.text[:2000]}\n"
+                )
                 if log.isEnabledFor(logging.DEBUG) and resp.content:
                     log.debug("← body: %s", resp.text[:2000])
 
