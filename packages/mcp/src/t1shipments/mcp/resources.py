@@ -124,7 +124,7 @@ with T1Client.from_settings() as client:
 | Environment | API | Auth (Keycloak) |
 |---|---|---|
 | Dev | `https://apiv2.dev.t1envios.com` | `https://keycloak.dev.plataformat1.com` |
-| Prod | `https://apiv2.t1envios.com` | `https://keycloak.plataformat1.com` |
+| Prod | `https://apiv2.t1envios.com` | `https://id.t1.com` |
 
 ### Authentication (Keycloak OIDC)
 

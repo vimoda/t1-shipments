@@ -12,7 +12,7 @@ ENV_PRESETS: dict[str, dict[str, str]] = {
     },
     "prod": {
         "base_url": "https://apiv2.t1envios.com",
-        "auth_base_url": "https://keycloak.plataformat1.com/auth/realms/T1",
+        "auth_base_url": "https://id.t1.com/auth/realms/T1",
     },
 }
 
