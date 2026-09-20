@@ -16,6 +16,15 @@ if TYPE_CHECKING:
 log = logging.getLogger("t1shipments.auth")
 
 
+def _mask(value: str | None, keep: int = 4) -> str:
+    """Return a value with only the last `keep` chars visible, for safe logging."""
+    if not value:
+        return "<empty>"
+    if len(value) <= keep:
+        return "*" * len(value)
+    return "*" * (len(value) - keep) + value[-keep:]
+
+
 class Authenticator:
     def __init__(
         self,
@@ -76,9 +85,17 @@ class Authenticator:
         if not self._token or not self._token.refresh_token:
             raise SessionExpiredError("No active session. Run: t1 auth login")
 
-        log.debug("Refreshing token")
+        url = self._endpoints.auth_url(self._endpoints.auth)
+        log.debug(
+            "Refresh request: url=%s grant_type=refresh_token client_id=%s "
+            "client_secret=%s refresh_token=%s",
+            url,
+            self._client_id,
+            _mask(self._client_secret),
+            _mask(self._token.refresh_token),
+        )
         resp = self._http.post(
-            self._endpoints.auth_url(self._endpoints.auth),
+            url,
             data={
                 "grant_type": "refresh_token",
                 "client_id": self._client_id,
@@ -88,6 +105,7 @@ class Authenticator:
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
         if resp.status_code != 200:
+            log.warning("Refresh failed [%s]: %s", resp.status_code, resp.text)
             raise SessionExpiredError(
                 f"Session expired (refresh failed [{resp.status_code}]). Run: t1 auth login"
             )
