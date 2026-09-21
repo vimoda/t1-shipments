@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import stat
 from pathlib import Path
@@ -8,6 +9,8 @@ from typing import Protocol
 
 from ..exceptions import StorageError
 from .token import Token
+
+log = logging.getLogger("t1shipments.auth")
 
 _SERVICE_NAME = "t1shipments"
 _ACCOUNT_NAME = "default"
@@ -86,6 +89,7 @@ class HybridStorage:
     """
 
     def __init__(self, allow_file_fallback: bool = True) -> None:
+        self._allow_file_fallback = allow_file_fallback
         self._backend: TokenStorage
         try:
             import keyring
@@ -101,11 +105,62 @@ class HybridStorage:
                 )
             self._backend = FileStorage()
 
+    def _demote_to_file(self, exc: Exception) -> None:
+        """Called when the keyring backend fails at runtime (not just at init) —
+        e.g. a denied/locked macOS Keychain. Falls back to file storage for the
+        rest of this process, matching the class's documented behavior."""
+        if not self._allow_file_fallback:
+            raise StorageError(
+                f"Keyring backend failed and allow_file_fallback=False: {exc}"
+            ) from exc
+        log.warning("Keyring backend failed (%s); falling back to file storage.", exc)
+        self._backend = FileStorage()
+
     def save(self, token: Token) -> None:
-        self._backend.save(token)
+        try:
+            self._backend.save(token)
+        except Exception as exc:
+            if not isinstance(self._backend, KeyringStorage):
+                raise
+            self._demote_to_file(exc)
+            self._backend.save(token)
 
     def load(self) -> Token | None:
-        return self._backend.load()
+        try:
+            token = self._backend.load()
+        except Exception as exc:
+            if not isinstance(self._backend, KeyringStorage):
+                raise
+            self._demote_to_file(exc)
+            return self._backend.load()
+
+        # A keyring read can succeed (no exception) yet return a stale entry
+        # left over from before client_id/client_secret were persisted, or
+        # from a login that itself silently failed to overwrite it. Such a
+        # token is unusable for from_settings() re-auth, so don't let it
+        # shadow a usable, fully-populated token saved to file storage.
+        if isinstance(self._backend, KeyringStorage) and not self._has_client_credentials(token):
+            file_token = FileStorage().load()
+            if self._has_client_credentials(file_token):
+                log.warning(
+                    "Keyring token is missing client credentials (stale entry?); "
+                    "using file storage token instead."
+                )
+                self._backend = FileStorage()
+                return file_token
+
+        return token
+
+    @staticmethod
+    def _has_client_credentials(token: Token | None) -> bool:
+        return bool(token and token.client_id and token.client_secret)
 
     def clear(self) -> None:
         self._backend.clear()
+        if isinstance(self._backend, KeyringStorage):
+            # Best-effort: also clear the file fallback so a stale keyring
+            # entry can't resurrect credentials logout was meant to remove.
+            try:
+                FileStorage().clear()
+            except Exception:
+                pass

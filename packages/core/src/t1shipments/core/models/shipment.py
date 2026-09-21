@@ -20,7 +20,7 @@ class ShipmentRequest(BaseModel):
     origin_municipality: str = Field(..., description="Sender's municipality.", min_length=3, max_length=35)
     origin_references: str = Field(default="", description="Sender's address references.", max_length=35)
     origin_postal_code: str = Field(..., min_length=5, max_length=5, description="5-digit origin postal code (Mexico).")
-    origin_commerce_name: Optional[str] = Field(default="", description="Sender's commerce name.", max_length=60)
+    origin_company: Optional[str] = Field(default="", description="Sender's company name.", max_length=60)
 
     destination_first_name: str = Field(..., description="Recipient's first name.", min_length=3, max_length=25)
     destination_last_name: str = Field(..., description="Recipient's last name(s).", min_length=3, max_length=25)
@@ -33,7 +33,7 @@ class ShipmentRequest(BaseModel):
     destination_municipality: str = Field(..., description="Recipient's municipality.", min_length=3, max_length=35)
     destination_references: str = Field(default="", description="Recipient's address references.", max_length=35)
     destination_postal_code: str = Field(..., min_length=5, max_length=5, description="5-digit destination postal code.")
-    destination_commerce_name: Optional[str] = Field(default="", description="Recipient's commerce name.", max_length=60)
+    destination_company: Optional[str] = Field(default="", description="Recipient's company name.", max_length=60)
 
     packages: int = Field(..., gt=0, description="Number of packages.")
     generate_pickup: bool = Field(False, description="Generate a pickup request when creating the shipment.")
