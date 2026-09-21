@@ -126,6 +126,11 @@ with T1Client.from_settings() as client:
 | Dev | `https://apiv2.dev.t1envios.com` | `https://keycloak.dev.plataformat1.com` |
 | Prod | `https://apiv2.t1envios.com` | `https://id.t1.com` |
 
+| Environment | Wallet |
+|---|---|
+| Dev | `https://sandbox.t1api.com/t1-shipping` |
+| Prod | `https://wallet.t1api.com` |
+
 ### Authentication (Keycloak OIDC)
 
 ```
@@ -160,13 +165,25 @@ grant_type=refresh_token
 | `POST` | `/guide/create` | Create shipment guide (**cost**) |
 | `GET` | `/rastreo/estado-guia/{guide}` | Track shipment state |
 | `GET` | `/rastreo/detail-guia/{guide}` | Full tracking detail |
-| `GET` | `/balance/consult` | Account balance |
 | `GET` | `/carriers` | List carriers |
 | `POST` | `/pickup/create` | Schedule pickup |
 
+### Wallet endpoint (separate domain)
+
+Account balance lives on the **wallet** server, not the main API domain:
+
+```
+GET {wallet_base_url}/wallet/movements
+Authorization: Bearer {access_token}
+seller_id: {commerce_id}
+```
+
+Note the `seller_id` header instead of `shop_id` — it identifies the merchant
+in the wallet system (T1's `commerce_id`).
+
 ### Headers
 
-All API requests (except auth) require:
+All main-API requests (except auth) require:
 
 ```
 Authorization: Bearer {access_token}

@@ -9,10 +9,12 @@ ENV_PRESETS: dict[str, dict[str, str]] = {
     "dev": {
         "base_url": "https://apiv2.dev.t1envios.com",
         "auth_base_url": "https://keycloak.dev.plataformat1.com/auth/realms/claroshop-sapi-sa-cv",
+        "wallet_base_url": "https://sandbox.t1api.com/t1-shipping",
     },
     "prod": {
         "base_url": "https://apiv2.t1envios.com",
         "auth_base_url": "https://id.t1.com/auth/realms/T1",
+        "wallet_base_url": "https://wallet.t1api.com",
     },
 }
 
@@ -22,12 +24,13 @@ class Endpoints(BaseModel):
 
     base_url: str = ENV_PRESETS["dev"]["base_url"]
     auth_base_url: str = ENV_PRESETS["dev"]["auth_base_url"]
+    wallet_base_url: str = ENV_PRESETS["dev"]["wallet_base_url"]
     auth: str = "/protocol/openid-connect/token"
     refresh: str = "/protocol/openid-connect/token"
     quote: str = "/quote/create-with-quote"
     track_state: str = "/rastreo/estado-guia/{guide}"
     track_detail: str = "/rastreo/detail-guia/{guide}"
-    balance: str = "/balance/consult"
+    wallet_movements: str = "/wallet/movements"
     pickup: str = "/pickup/create"
     carriers: str = "/carriers"
     create_shipment: str = "/guide/create"
@@ -38,8 +41,14 @@ class Endpoints(BaseModel):
     def url(self, path: str, **kwargs: str) -> str:
         return self.base_url.rstrip("/") + path.format(**kwargs)
 
+    def wallet_url(self, path: str, **kwargs: str) -> str:
+        return self.wallet_base_url.rstrip("/") + path.format(**kwargs)
+
     def set_auth_url(self, url: str) -> None:
         self.auth_base_url = url
+
+    def set_wallet_url(self, url: str) -> None:
+        self.wallet_base_url = url
 
     def set_base_url(self, url: str) -> None:
         self.base_url = url
@@ -59,8 +68,8 @@ class Endpoints(BaseModel):
     def set_track_detail_path(self, path: str) -> None:
         self.track_detail = path
 
-    def set_balance_path(self, path: str) -> None:
-        self.balance = path
+    def set_wallet_movements_path(self, path: str) -> None:
+        self.wallet_movements = path
 
     def set_pickup_path(self, path: str) -> None:
         self.pickup = path
@@ -77,18 +86,21 @@ class Endpoints(BaseModel):
         env: Literal["dev", "prod"] = "dev",
         base_url: str | None = None,
         auth_base_url: str | None = None,
+        wallet_base_url: str | None = None,
     ) -> Endpoints:
         """Build Endpoints from an env preset, with optional per-field overrides.
 
-        Keeps base_url and auth_base_url in sync for SDK users who build
-        Endpoints directly instead of going through Settings (e.g. when only
-        base_url is customized, auth_base_url still resolves to the matching
-        preset instead of silently staying on dev).
+        Keeps base_url, auth_base_url and wallet_base_url in sync for SDK
+        users who build Endpoints directly instead of going through Settings
+        (e.g. when only base_url is customized, auth_base_url/wallet_base_url
+        still resolve to the matching preset instead of silently staying on
+        dev).
         """
         preset = ENV_PRESETS[env]
         return cls(
             base_url=base_url or preset["base_url"],
             auth_base_url=auth_base_url or preset["auth_base_url"],
+            wallet_base_url=wallet_base_url or preset["wallet_base_url"],
         )
 
 
@@ -102,6 +114,7 @@ class Settings(BaseSettings):
     env: Literal["dev", "prod"] = "dev"
     base_url: str | None = None
     auth_url: str | None = None
+    wallet_url: str | None = None
     shop_id: str | None = None
     commerce_id: str | None = None
     timeout: float = 30.0
@@ -109,4 +122,9 @@ class Settings(BaseSettings):
     log_level: str | None = None
 
     def endpoints(self) -> Endpoints:
-        return Endpoints.from_env(self.env, base_url=self.base_url, auth_base_url=self.auth_url)
+        return Endpoints.from_env(
+            self.env,
+            base_url=self.base_url,
+            auth_base_url=self.auth_url,
+            wallet_base_url=self.wallet_url,
+        )

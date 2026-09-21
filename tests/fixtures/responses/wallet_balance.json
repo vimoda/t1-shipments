@@ -1,0 +1,24 @@
+{
+  "success": true,
+  "message": "Consulta exitosa",
+  "seller_id": 204577,
+  "current_balance": 1585.86,
+  "balance_limits": {
+    "auto_reload": false,
+    "auto_reload_threshold": 0,
+    "auto_reload_amount": 0,
+    "auto_reload_monthly_limit": 0,
+    "auto_reload_card_id": null,
+    "auto_reload_updated_at": null,
+    "auto_reload_updated_by": null
+  },
+  "timestamp": "2026-09-21T05:28:54.842329",
+  "overweight": false,
+  "is_deleted": false,
+  "overweight_pending": false,
+  "maintenance_today": {
+    "has_notification": false,
+    "total": 0,
+    "notifications": []
+  }
+}

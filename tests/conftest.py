@@ -56,7 +56,11 @@ def storage(valid_token: Token) -> InMemoryStorage:
 
 @pytest.fixture
 def endpoints() -> Endpoints:
-    return Endpoints(base_url="https://api.example.com", auth_base_url="https://api.example.com")
+    return Endpoints(
+        base_url="https://api.example.com",
+        auth_base_url="https://api.example.com",
+        wallet_base_url="https://wallet.example.com",
+    )
 
 
 @pytest.fixture

@@ -9,12 +9,22 @@ from t1shipments.cli.app import app
 from t1shipments.core.auth.storage import InMemoryStorage
 from t1shipments.core.auth.token import Token
 from t1shipments.core.client import T1Client
-from t1shipments.core.config import Settings
+from t1shipments.core.config import Endpoints, Settings
 from t1shipments.core.exceptions import ConfigError
 from t1shipments.mcp import server as mcp_server
 from typer.testing import CliRunner
 
 runner = CliRunner()
+
+
+def test_endpoints_from_env_dev_resolves_sandbox_wallet_url():
+    endpoints = Endpoints.from_env("dev")
+    assert endpoints.wallet_base_url == "https://sandbox.t1api.com/t1-shipping"
+
+
+def test_endpoints_from_env_prod_resolves_wallet_url():
+    endpoints = Endpoints.from_env("prod")
+    assert endpoints.wallet_base_url == "https://wallet.t1api.com"
 
 
 def test_settings_does_not_require_client_credentials():

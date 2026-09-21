@@ -215,15 +215,15 @@ class TestResources:
 
     def test_read_balance(self, httpx_mock, client):
         httpx_mock.add_response(
-            url="https://api.example.com/balance/consult",
-            json=load_fixture("balance"),
+            url="https://wallet.example.com/wallet/movements",
+            json=load_fixture("wallet_balance"),
         )
         contents = resources_module._read("t1shipments://balance", lambda: client)
         assert len(contents) == 1
         import json
 
         data = json.loads(contents[0].text)
-        assert data["amount"] == 1250.50
+        assert data["amount"] == 1585.86
 
     def test_read_carriers(self, httpx_mock, client):
         httpx_mock.add_response(

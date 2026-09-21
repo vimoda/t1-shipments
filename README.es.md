@@ -45,9 +45,7 @@ uv sync
 from t1shipments.core.client import T1Client
 from t1shipments.core.models.quote import QuoteRequest
 from t1shipments.core.models.shipment import ShipmentRequest
-from t1shipments.core.models.balance import Balance
-from t1shipments.core.models.carrier import Carrier
-from t1shipments.core.models.tracking import TrackingResponse, TrackingState
+from t1shipments.core.models.tracking import Balance, Carrier, TrackingResponse, TrackingState
 from t1shipments.core.exceptions import SessionExpiredError, ApiError, InsufficientBalanceError
 ```
 

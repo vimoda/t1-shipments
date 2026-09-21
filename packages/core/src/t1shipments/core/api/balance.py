@@ -6,30 +6,26 @@ from .base import BaseResource
 
 class BalanceResource(BaseResource):
     def balance(self) -> Balance:
-        url = self._endpoints.url(self._endpoints.balance)
-        data = self.request("GET", url)
+        url = self._endpoints.wallet_url(self._endpoints.wallet_movements)
+        headers = {"seller_id": self._commerce_id} if self._commerce_id else {}
+        data = self.request("GET", url, headers=headers)
 
         if not isinstance(data, dict):
             raise ValueError(f"Expected dict response, got {type(data)}")
 
-        detail = data.get("detail")
-        if not detail or not isinstance(detail, dict):
-            raise ValueError(data.get("message") or "No 'detail' field in response")
+        if not data.get("success", False):
+            raise ValueError(data.get("message") or "Wallet balance request failed")
 
-        commerce_id = detail.get("comercio_id")
-        commerce_id_t1_pages = detail.get("comercio_id_t1paginas")
+        # T1 returns seller_id as a number — normalize to str so the field
+        # always validates and consumers get a stable type.
+        seller_id = data.get("seller_id")
 
         return Balance.model_validate(
             {
-                "amount": detail.get("monto_actual", 0.0),
-                "currency": detail.get("currency", "MXN") or "MXN",
-                # T1 returns comercio_id as either a string or a number depending on
-                # environment (prod sends int, dev sends str) — normalize to str so
-                # the field always validates and consumers get a stable type.
-                "commerce_id": str(commerce_id) if commerce_id is not None else None,
-                "commerce_id_t1_pages": (
-                    str(commerce_id_t1_pages) if commerce_id_t1_pages is not None else None
-                ),
-                "credit": detail.get("credito", False),
+                "amount": data.get("current_balance", 0.0),
+                "seller_id": str(seller_id) if seller_id is not None else None,
+                "updated_at": data.get("timestamp"),
+                "overweight": data.get("overweight", False),
+                "overweight_pending": data.get("overweight_pending", False),
             }
         )

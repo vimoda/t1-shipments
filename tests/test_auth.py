@@ -11,12 +11,16 @@ from t1shipments.core.config import Endpoints
 from t1shipments.core.exceptions import AuthError, SessionExpiredError
 
 AUTH_URL = "https://api.example.com/protocol/openid-connect/token"
-BALANCE_URL = "https://api.example.com/balance/consult"
+BALANCE_URL = "https://wallet.example.com/wallet/movements"
 
 
 @pytest.fixture
 def endpoints() -> Endpoints:
-    return Endpoints(base_url="https://api.example.com", auth_base_url="https://api.example.com")
+    return Endpoints(
+        base_url="https://api.example.com",
+        auth_base_url="https://api.example.com",
+        wallet_base_url="https://wallet.example.com",
+    )
 
 
 def _auth(endpoints, storage=None) -> Authenticator:
@@ -149,7 +153,7 @@ def test_401_triggers_refresh_then_retry(httpx_mock, endpoints):
     httpx_mock.add_response(url=BALANCE_URL, status_code=401)
     httpx_mock.add_response(
         url=BALANCE_URL,
-        json={"success": True, "detail": {"monto_actual": 100.0, "currency": "MXN", "credito": False}},
+        json={"success": True, "seller_id": 1, "current_balance": 100.0},
     )
 
     from t1shipments.core.api.balance import BalanceResource

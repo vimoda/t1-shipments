@@ -49,15 +49,16 @@ class TrackingState(BaseModel):
 
 class Balance(BaseModel):
     amount: float
-    currency: str = "MXN"
-    commerce_id: str | None = None
-    commerce_id_t1_pages: str | None = None
-    credit: bool = False
+    currency: str = "MXN"  # el wallet no devuelve moneda; T1 wallet es MXN-only
+    seller_id: str | None = None
+    updated_at: datetime | None = None
+    overweight: bool = False
+    overweight_pending: bool = False
 
     @computed_field  # type: ignore[misc]
     @property
     def can_ship(self) -> bool:
-        return self.amount > 0 or self.credit
+        return self.amount > 0
 
 
 class Carrier(BaseModel):

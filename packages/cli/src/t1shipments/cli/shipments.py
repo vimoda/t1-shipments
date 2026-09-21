@@ -24,6 +24,8 @@ def run_balance() -> None:
         raise typer.Exit(1)
 
     rprint(f"[bold]Saldo:[/bold] {bal.amount:,.2f} {bal.currency}")
+    if bal.overweight:
+        rprint("[yellow]Aviso:[/yellow] la cuenta tiene sobrepeso registrado")
 
 
 def run_quote(
