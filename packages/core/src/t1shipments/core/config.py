@@ -34,6 +34,7 @@ class Endpoints(BaseModel):
     pickup: str = "/pickup/create"
     carriers: str = "/carriers"
     create_shipment: str = "/guide/create"
+    list_shipments: str = "/adminseller/status-shipment/items/{items}/page/{page}"
 
     def auth_url(self, path: str, **kwargs: str) -> str:
         return self.auth_base_url.rstrip("/") + path.format(**kwargs)
@@ -76,6 +77,9 @@ class Endpoints(BaseModel):
 
     def set_carriers_path(self, path: str) -> None:
         self.carriers = path
+
+    def set_list_shipments_path(self, path: str) -> None:
+        self.list_shipments = path
 
     def set_create_shipment_path(self, path: str) -> None:
         self.create_shipment = path

@@ -44,3 +44,28 @@ def test_create_shipment_success(httpx_mock, client):
     assert shipment.tracking_number == "1Z999AA10123456784"
     assert shipment.carrier == "DHL"
     assert shipment.guide_link == "https://labels.t1envios.com/12345.pdf"
+
+
+def test_create_shipment_does_not_retry_on_5xx(httpx_mock, client):
+    import pytest
+    from t1shipments.core.exceptions import ApiError
+
+    httpx_mock.add_response(url="https://api.example.com/guide/create", status_code=504)
+    with pytest.raises(ApiError):
+        client.create_shipment(_req())
+    assert len(httpx_mock.get_requests()) == 1
+
+
+def test_list_shipments_by_guide(httpx_mock, client):
+    httpx_mock.add_response(
+        url="https://api.example.com/adminseller/status-shipment/items/10/page/1?guide=7230771284",
+        json={
+            "success": True,
+            "detail": [
+                {"guide": "7230771284", "shipment_id": "abc", "carrier": "DHL", "cost": 351.38, "status": "Activa"}
+            ],
+        },
+    )
+    found = client.list_shipments(guide="7230771284")
+    assert [s.guide for s in found] == ["7230771284"]
+    assert found[0].cost == 351.38

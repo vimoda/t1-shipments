@@ -41,11 +41,14 @@ class BaseResource:
         url: str,
         *,
         retry_on_401: bool = True,
+        retries: int | None = None,
         **kwargs: Any,
     ) -> Any:
+        """`retries` overrides the resource default; use 1 for non-idempotent calls."""
         headers = kwargs.pop("headers", {})
+        attempts = max(self._retries if retries is None else retries, 1)
 
-        for attempt in range(max(self._retries, 1)):
+        for attempt in range(attempts):
             try:
                 token = self._auth.ensure_valid()
                 headers["Authorization"] = f"Bearer {token.access_token}"
@@ -80,7 +83,7 @@ class BaseResource:
                     resp = self._http.send(req)
                     log.debug("→ %s (after token refresh)", resp.status_code)
 
-                if 500 <= resp.status_code < 600 and attempt < self._retries - 1:
+                if 500 <= resp.status_code < 600 and attempt < attempts - 1:
                     delay = self._retry_delay * (2**attempt)
                     log.warning("5xx (%s) on attempt %d, retrying in %.1fs", resp.status_code, attempt + 1, delay)
                     time.sleep(delay)
@@ -90,7 +93,7 @@ class BaseResource:
                 return resp.json() if resp.content else None
 
             except (httpx.TimeoutException, httpx.ConnectError, httpx.RemoteProtocolError) as exc:
-                if attempt < self._retries - 1:
+                if attempt < attempts - 1:
                     delay = self._retry_delay * (2**attempt)
                     log.warning("%s on attempt %d, retrying in %.1fs", type(exc).__name__, attempt + 1, delay)
                     time.sleep(delay)

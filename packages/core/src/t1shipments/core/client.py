@@ -17,7 +17,7 @@ from .auth.storage import InMemoryStorage, TokenStorage
 from .auth.token import Token
 from .config import Endpoints
 from .models.quote import QuoteRequest, QuoteResponse
-from .models.shipment import Shipment, ShipmentRequest
+from .models.shipment import Shipment, ShipmentRequest, ShipmentSummary
 from .models.tracking import Balance, Carrier, Pickup, PickupRequest, TrackingResponse, TrackingState
 from .utils.logging import configure_logging
 
@@ -88,6 +88,9 @@ class T1Client:
 
     def create_shipment(self, req: ShipmentRequest) -> Shipment:
         return self._shipments.create_shipment(req)
+
+    def list_shipments(self, items: int = 10, page: int = 1, **filters: str) -> list[ShipmentSummary]:
+        return self._shipments.list_shipments(items, page, **filters)
 
     def download_label(self, guide_link: str) -> bytes:
         return self._shipments.download_label(guide_link)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ShipmentRequest(BaseModel):
@@ -68,6 +68,23 @@ class Parcel(BaseModel):
     length: float = Field(gt=0)
     description: str | None = None
     package_value: float = 0.0
+
+
+class ShipmentSummary(BaseModel):
+    """One row of the 'Consultar Guías' listing."""
+
+    model_config = ConfigDict(extra="allow")
+
+    guide: str
+    shipment_id: str | None = None
+    carrier: str | None = None
+    status: str | None = None
+    date: str | None = None
+    cost: float | None = None
+    client: str | None = None
+    external_order: str | None = None
+    file_link: str | None = None
+    tracking_link: str | None = None
 
 
 class Shipment(BaseModel):
