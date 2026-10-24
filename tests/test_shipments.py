@@ -46,6 +46,20 @@ def test_create_shipment_success(httpx_mock, client):
     assert shipment.guide_link == "https://labels.t1envios.com/12345.pdf"
 
 
+def test_create_shipment_sends_commercial_order_only_when_set(httpx_mock, client):
+    import json
+
+    httpx_mock.add_response(url="https://api.example.com/guide/create", json=load_fixture("shipment"))
+    client.create_shipment(_req())
+    req = _req()
+    req.commercial_order = "00042"
+    httpx_mock.add_response(url="https://api.example.com/guide/create", json=load_fixture("shipment"))
+    client.create_shipment(req)
+    first, second = (json.loads(r.content) for r in httpx_mock.get_requests())
+    assert "commercial_order" not in first
+    assert second["commercial_order"] == "00042"
+
+
 def test_create_shipment_does_not_retry_on_5xx(httpx_mock, client):
     import pytest
     from t1shipments.core.exceptions import ApiError

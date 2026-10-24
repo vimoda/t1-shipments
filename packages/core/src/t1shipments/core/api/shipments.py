@@ -13,6 +13,8 @@ class ShipmentsResource(BaseResource):
     def create_shipment(self, req: ShipmentRequest) -> Shipment:
         url = self._endpoints.url(self._endpoints.create_shipment)
         payload = req.model_dump()
+        if payload.get("commercial_order") is None:
+            payload.pop("commercial_order", None)
         if self._shop_id:
             payload["comercio_id"] = self._shop_id
         log.debug("create_shipment payload: %s", payload)

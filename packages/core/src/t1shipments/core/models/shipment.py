@@ -38,6 +38,7 @@ class ShipmentRequest(BaseModel):
     packages: int = Field(..., gt=0, description="Number of packages.")
     generate_pickup: bool = Field(False, description="Generate a pickup request when creating the shipment.")
     has_notification: bool = Field(False, description="Send notifications for this shipment.")
+    commercial_order: Optional[str] = Field(default=None, description="Merchant order number; returned as external_order when listing guides.", max_length=50)
     guide_origin: str = Field("t1envios", description='Source of the guide. Allowed: "t1envios".')
 
     @model_validator(mode="after")
